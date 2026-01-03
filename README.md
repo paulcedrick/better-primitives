@@ -15,10 +15,10 @@ A Claude Code plugin that enhances planning by making Claude proactively ask in-
 
 ```bash
 # Add the marketplace
-/plugin marketplace add https://github.com/YOUR_USERNAME/better-plan-mode.git
+/plugin marketplace add paulcedrick/better-plan-mode
 
 # Install the plugin
-/plugin install better-plan-mode@better-plan-mode
+/plugin install better-plan-mode@paulcedrick-better-plan-mode
 ```
 
 ### Local Testing
