@@ -1,5 +1,5 @@
 ---
-description: Start thorough analysis for improvements. Uses iterative questioning to deeply understand what can be improved and how.
+description: Start thorough analysis for improvements. Uses iterative confidence metrics to deeply understand what can be improved and how.
 ---
 
 # Analysis Mode
@@ -8,262 +8,158 @@ You are now in analysis mode. Your goal is to **thoroughly analyze** the target 
 
 ## Core Principle
 
-**Analyze deeply. Confirm constantly. Iterate until confident.**
+**Analyze iteratively. Quantify confidence. Confirm frequently.**
 
-You must ask questions after EVERY analysis step. Do not present final findings until you have HIGH confidence in your understanding and recommendations.
+After EVERY analysis step, calculate and display your confidence score. Keep analyzing until you reach HIGH confidence (80+) before presenting final findings.
 
-## Analysis Process (Iterative)
+## The Walkthrough Protocol
 
-### Phase 1: Initial Understanding
+Before identifying improvements, explain the code's purpose aloud. This forces you to understand what the code does before judging what it should do better.
 
-Start by understanding what the user wants to improve. Use `AskUserQuestion` to clarify:
+Use phrases like:
 
-**Goals**
+- "Let me walk through what this code is meant to do..."
+- "This function's responsibility appears to be..."
+- "I see this pattern: [describe], which suggests..."
 
-- What specifically do you want to improve?
-- Why is this improvement needed now?
+Then ask: "Now that I understand its purpose, what could be improved?"
+
+## Confidence Metrics (Summary)
+
+Calculate confidence using this weighted formula:
+
+```
+Score = Goals(20%) + Exploration(20%) + Opportunities(15%) + Priorities(15%) + Trade-offs(15%) + Alignment(15%)
+```
+
+| Level          | Score  | Description                             |
+| -------------- | ------ | --------------------------------------- |
+| **INITIAL**    | 0-24   | Just starting, gathering information    |
+| **DEVELOPING** | 25-49  | Some understanding, gaps remain         |
+| **SOLID**      | 50-74  | Good understanding, validating          |
+| **HIGH**       | 75-89  | Strong understanding, ready to present  |
+| **READY**      | 90-100 | Complete understanding, high confidence |
+
+Display the full metrics table at **every analysis step**.
+
+## Analysis Phases
+
+### Phase 1: Initial Understanding (~15/100 INITIAL)
+
+Gather complete information about what needs improvement:
+
+- What exactly should be improved?
+- Why now? What motivated this?
 - What does success look like?
-
-**Constraints**
-
 - What cannot be changed?
-- Are there any dependencies to preserve?
-- Any performance, security, or compatibility requirements?
 
-**Context**
+### Phase 2: Code Exploration (~40/100 DEVELOPING)
 
-- Has this been attempted before? What happened?
-- Any recent changes that motivated this?
-- Who will be affected by these improvements?
+Explore the target area using the Walkthrough Protocol:
 
-**Motivation**
+- Walk through what the code does
+- Identify patterns and conventions
+- Note potential improvement opportunities
+- Document technical constraints
 
-- Is this preventing something from working?
-- Is this about quality, performance, maintainability, or something else?
-- How urgent is this?
+### Phase 3: Deep Analysis (~60/100 SOLID)
 
-Ask 2-4 questions at a time. Don't overwhelm, but be thorough.
+Present initial findings with Impact/Effort scores and ask for prioritization:
 
-**Confidence Checkpoint:** Before proceeding, self-assess: "Do I understand what the user wants to improve and why?" If not, ask more questions. Then confirm with user: "Do I understand your improvement goals correctly?"
+- Score findings on Impact (1-4) and Effort (1-4)
+- Priority = Impact + Effort (higher is better, max 8)
+- Group by ISO 25010 quality characteristics
+- Discuss trade-offs of proposed changes
 
-### Phase 2: Initial Code Exploration
+### Phase 4: Validation (~80/100 HIGH)
 
-After initial understanding, explore the target area:
+Validate findings against user priorities:
 
-- Examine the current state of the code/feature
-- Identify patterns and conventions in use
-- Note areas that stand out for potential improvement
-- Document technical constraints from current architecture
+- Look for anything missed
+- Check if findings align with user goals
+- Discover any new information
 
-### Phase 3: Deep Analysis Questions
+**If new discoveries:** Loop back to Phase 3 and ask new questions.
 
-Based on exploration findings, use `AskUserQuestion` to clarify:
+### Phase 5: Present Findings (HIGH)
 
-**Prioritization**
+Only present final findings when HIGH confidence (80+) is reached:
 
-- Present discovered improvement opportunities
-- Ask: Which of these matter most to you?
-- Ask: Are there improvements here you explicitly don't want?
-
-**Trade-offs**
-
-- Present trade-offs found (e.g., "simplifying X would require changing Y")
-- Ask: How do you feel about these trade-offs?
-- Ask: Any trade-offs that are deal-breakers?
-
-**Scope Boundaries**
-
-- Ask: Should improvements stay within this area, or is broader refactoring acceptable?
-- Ask: Are there related areas I should also analyze?
-- Ask: What's the acceptable level of change?
-
-**Risk Tolerance**
-
-- Ask: How conservative should I be with recommendations?
-- Ask: Are breaking changes acceptable if they improve quality?
-
-**Confidence Checkpoint:** Before proceeding, self-assess: "Do I have a clear understanding of priorities and constraints?" If not, ask more questions. Then confirm with user: "Does this analysis direction make sense?"
-
-### Phase 4: Validation Exploration
-
-After deep analysis questions, explore again to:
-
-- Validate your initial findings against user priorities
-- Look for edge cases or issues you might have missed
-- Check if your improvement ideas are actually feasible
-- Refine your analysis based on what you discover
-
-**If exploration reveals something that changes your analysis:**
-
-- Loop back to Phase 3
-- Ask new clarifying questions about the discovery
-- Update your understanding before proceeding
-
-### Phase 5: Final Findings + Next Steps
-
-Only present final findings when you're confident. Include:
-
-**Categorized Findings**
-
-Group improvements by dynamic categories that emerge from analysis (e.g., Performance, Readability, Security, Architecture, Error Handling, etc.)
-
-For each finding:
-
-- What the issue/opportunity is
-- Why it matters
-- Severity/impact indicator (Critical, Important, Nice-to-have)
-- Brief suggestion for how to address it
-
-**Ask: Implementation Plan?**
-
-Use `AskUserQuestion` to ask:
-
-- "Would you like me to create an implementation plan for these improvements?"
-- Options: Yes (create plan), No (analysis only), Select specific items
-
-## Confidence System
-
-Unlike debugging (which uses numeric scores), analysis uses milestone-based confidence:
-
-### Confidence Milestones
-
-| Milestone                 | Indicator                                                        |
-| ------------------------- | ---------------------------------------------------------------- |
-| **Goals Understood**      | User confirmed improvement objectives                            |
-| **Constraints Clear**     | Know what can/cannot change                                      |
-| **Code Explored**         | Examined target area thoroughly                                  |
-| **Priorities Confirmed**  | User validated which improvements matter                         |
-| **Trade-offs Discussed**  | User is aware of and accepts trade-offs                          |
-| **Findings Validated**    | Second exploration confirmed initial analysis                    |
-| **Ready to Present**      | All milestones achieved, confident in recommendations            |
-
-Display milestones at each phase:
-
-```markdown
-### Analysis Progress
-
-- [x] Goals Understood
-- [x] Constraints Clear
-- [x] Code Explored (initial)
-- [ ] Priorities Confirmed
-- [ ] Trade-offs Discussed
-- [ ] Findings Validated
-- [ ] Ready to Present
-
-**Current Phase:** Deep Analysis Questions
-```
-
-## Output Format
-
-### During Analysis
-
-```markdown
-## Analysis Progress
-
-### Milestones
-
-- [x] Goals Understood
-- [x] Constraints Clear
-- [ ] ...
-
-**Current Phase:** [Phase name]
-
-### Current Findings
-
-[What you've discovered so far]
-
-### Areas Under Investigation
-
-[What you're looking at]
-
-### Questions
-
-[AskUserQuestion with relevant questions]
-```
-
-### Final Findings
-
-```markdown
-## Analysis Complete
-
-### Summary
-
-[Brief overview of the target area and key findings]
-
-### Findings by Category
-
-#### [Category 1: e.g., Performance]
-
-| Finding | Impact | Suggestion |
-|---------|--------|------------|
-| [Issue] | Critical/Important/Nice-to-have | [Brief suggestion] |
-
-#### [Category 2: e.g., Readability]
-
-...
-
-### Trade-offs Acknowledged
-
-- [Trade-off 1 that user accepted]
-- [Trade-off 2]
-
-### Out of Scope
-
-- [Things explicitly excluded from this analysis]
-
-### Next Steps
-
-[Ask if user wants implementation plan]
-```
-
-## Question Guidelines
-
-After every analysis action, use `AskUserQuestion`:
-
-**Good analysis questions:**
-
-- Specific: "Should we prioritize performance or readability for this function?"
-- Validating: "I found X could be improved. Does this align with your concerns?"
-- Prioritizing: "These 5 areas could be improved. Which matter most?"
-- Clarifying: "This change would affect Y. Is that acceptable?"
-
-**Example AskUserQuestion structure:**
-
-```json
-{
-  "questions": [
-    {
-      "question": "Which improvement area should we prioritize?",
-      "header": "Priority",
-      "options": [
-        { "label": "Performance", "description": "Speed and efficiency improvements" },
-        { "label": "Readability", "description": "Code clarity and maintainability" },
-        { "label": "Error Handling", "description": "Better failure modes and recovery" },
-        { "label": "All equally", "description": "Don't prioritize, show everything" }
-      ],
-      "multiSelect": false
-    }
-  ]
-}
-```
-
-## Anti-Patterns to Avoid
-
-**Don't:**
-
-- Present findings without understanding user's priorities
-- Assume all improvements are wanted
-- Skip validation exploration
-- Present overwhelming lists without categorization
-- Make recommendations without understanding constraints
-
-**Do:**
-
-- Ask questions after every investigation action
-- Validate findings before presenting
-- Group by meaningful categories
-- Include severity/impact for each finding
+- Summary of analysis
+- Findings grouped by priority (Do First, Plan for Soon, Defer)
+- Trade-offs acknowledged
+- Out of scope items
 - Ask if user wants implementation plan
+
+## Impact/Effort Matrix
+
+| Impact    | Score | Effort    | Score |
+| --------- | ----- | --------- | ----- |
+| Critical  | 4     | Low       | 4     |
+| Important | 3     | Medium    | 3     |
+| Moderate  | 2     | High      | 2     |
+| Minor     | 1     | Very High | 1     |
+
+**Priority = Impact + Effort** (7-8: Do first, 5-6: Plan soon, 3-4: Consider, 1-2: Defer)
+
+## Quality Categories (ISO 25010)
+
+Organize findings by these standard characteristics:
+
+1. **Performance Efficiency** - Speed, resources, capacity
+2. **Reliability** - Maturity, availability, fault tolerance
+3. **Security** - Confidentiality, integrity, authenticity
+4. **Maintainability** - Modularity, reusability, testability
+5. **Compatibility** - Co-existence, interoperability
+6. **Portability** - Adaptability, installability
+
+## Common Improvement Patterns
+
+Reference the **thorough-analysis skill** for detailed patterns including:
+
+- God Class - Large class, many responsibilities
+- Feature Envy - Method uses other class's data more than its own
+- Long Method - Method > 20-30 lines, multiple abstractions
+- N+1 Query - Loop making individual database calls
+- Missing Abstraction - Duplicate code across 3+ locations
+- Premature Abstraction - Complex abstractions for single use case
+- Dead Code - Unused imports, unreachable branches
+- Magic Numbers - Hard-coded values with no explanation
+
+## Tool Selection
+
+| Tool                   | Use When                                 |
+| ---------------------- | ---------------------------------------- |
+| **Grep**               | Finding patterns, consistency checks     |
+| **Glob**               | Locating file types, naming conventions  |
+| **Read**               | Understanding context (with Walkthrough) |
+| **LSP findReferences** | Checking usage before suggesting changes |
+| **LSP incomingCalls**  | Understanding dependencies               |
+
+## Minimum Thresholds for HIGH
+
+- Goals Understood >= 70%
+- Codebase Explored >= 60%
+- Opportunities Found >= 50%
+- Priorities Confirmed >= 50%
+- Trade-offs Discussed >= 40%
+- User Alignment >= 50%
+
+If weighted score is 80+ but minimums not met, continue iterating.
+
+## Escape Hatches
+
+If user wants findings before reaching HIGH confidence:
+
+```
+You: Current confidence is 58/100. I can present findings now, but note these gaps:
+- Trade-offs not fully discussed
+- Validation pass incomplete
+
+[Present findings with "Preliminary" label and highlighted gaps]
+```
+
+Mark unvalidated findings as "Preliminary" or "Needs Validation".
 
 ## Arguments
 
@@ -274,5 +170,23 @@ If the user provides a focus area with the command:
 ```
 
 Use this as your starting focus, but still ask clarifying questions in Phase 1.
+
+## Anti-Patterns
+
+**Don't:**
+
+- Present findings without understanding user's priorities
+- Skip the Walkthrough Protocol
+- Propose changes without discussing trade-offs
+- Skip validation exploration
+- Present overwhelming lists without prioritization
+
+**Do:**
+
+- Use the Walkthrough Protocol before identifying improvements
+- Score findings on Impact/Effort for prioritization
+- Group by ISO 25010 quality characteristics
+- Confirm priorities and trade-offs explicitly
+- Ask if user wants implementation plan
 
 Remember: **Thorough analysis prevents wasted effort on unwanted changes.**

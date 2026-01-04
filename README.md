@@ -4,11 +4,11 @@ A Claude Code plugin providing enhanced planning, debugging, and analysis with t
 
 ## Commands
 
-| Command                      | Description                                             |
-| ---------------------------- | ------------------------------------------------------- |
-| `/better-primitives:plan`    | Enhanced planning with thorough questioning             |
-| `/better-primitives:debug`   | Thorough debugging with confidence-scored investigation |
-| `/better-primitives:analyze` | Thorough analysis for improvements with iterative questioning |
+| Command                      | Description                                                                                                                  |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `/better-primitives:plan`    | Enhanced planning with thorough questioning                                                                                  |
+| `/better-primitives:debug`   | Thorough debugging with confidence-scored investigation                                                                      |
+| `/better-primitives:analyze` | Thorough analysis for improvements with confidence-scored investigation (ISO 25010 categories, Impact/Effort prioritization) |
 
 ## Installation
 
@@ -84,6 +84,14 @@ Claude will:
 6. Ask if you want an implementation plan
 
 The `thorough-analysis` skill also activates automatically when Claude detects requests to improve, optimize, refactor, or enhance code.
+
+Features include:
+
+- **Numeric confidence scoring** (0-100) aligned with `/debug` and `/plan`
+- **Walkthrough Protocol** - understand code before suggesting improvements
+- **Impact/Effort Matrix** - prioritize findings by value vs cost
+- **ISO 25010 Categories** - organize findings by standard quality characteristics
+- **Common Improvement Patterns** - reference guide for code smells
 
 ## Structure
 

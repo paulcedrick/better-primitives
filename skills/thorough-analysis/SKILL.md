@@ -1,11 +1,11 @@
 ---
 name: thorough-analysis
-description: Enables thorough, question-driven analysis for improvements. Triggers when users want to improve, optimize, refactor, or enhance code. Iteratively investigates with frequent confirmation questions until confident in recommendations.
+description: Enables thorough, confidence-driven code analysis for improvements. Triggers when users want to improve, optimize, refactor, or enhance code. Iteratively investigates with frequent confirmation questions until confident in recommendations.
 ---
 
 # Thorough Analysis Skill
 
-When analyzing any code, feature, or system for potential improvements, follow this iterative, question-driven approach.
+When analyzing any code, feature, or system for potential improvements, follow this iterative, confidence-driven approach.
 
 ## Triggering Conditions
 
@@ -21,61 +21,415 @@ Activate this skill when:
 
 ## Core Principle
 
-**Analyze iteratively. Confirm frequently. Validate before concluding.**
+**Analyze iteratively. Quantify confidence. Confirm frequently.**
 
-After EVERY analysis step, ask 2-3 questions to confirm your findings and priorities before moving forward. Keep analyzing until you reach HIGH confidence in your recommendations.
+After EVERY analysis step, calculate and display your confidence score. Ask 2-3 questions to confirm findings and priorities before moving forward. Keep analyzing until you reach HIGH confidence (80+) in your recommendations.
 
-## Confidence Milestones System
+## The Walkthrough Protocol
 
-Analysis uses milestone-based confidence rather than numeric scores. Track these milestones throughout the investigation:
+Before identifying improvements, explain the code's purpose aloud. This forces you to understand what the code does before judging what it should do better. Improvements are meaningless without context.
 
-### Milestone Checklist
-
-| Milestone                | Description                                              | Required Questions                                    |
-| ------------------------ | -------------------------------------------------------- | ----------------------------------------------------- |
-| Goals Understood         | Know what user wants to improve and why                  | Goals, motivation, success criteria                   |
-| Constraints Clear        | Know what cannot change, dependencies, requirements      | Boundaries, dependencies, non-negotiables             |
-| Code Explored (Initial)  | First pass through target area complete                  | N/A (exploration)                                     |
-| Priorities Confirmed     | User validated which improvements matter most            | Priority ranking, explicit exclusions                 |
-| Trade-offs Discussed     | User aware of and accepts necessary trade-offs           | Trade-off acceptance, risk tolerance                  |
-| Findings Validated       | Second exploration confirmed initial analysis            | N/A (validation exploration)                          |
-| Ready to Present         | All above milestones achieved                            | Final confirmation before presenting                  |
-
-### Milestone Display Format
-
-Display at **every analysis step**:
+**Apply it:**
 
 ```markdown
-### Analysis Progress
+Before analyzing for improvements, let me walk through what this code does:
 
-- [x] Goals Understood - User wants to improve API response times
-- [x] Constraints Clear - Cannot change database schema
-- [x] Code Explored (Initial) - Examined 8 handler files
-- [ ] Priorities Confirmed - Awaiting user input
-- [ ] Trade-offs Discussed
-- [ ] Findings Validated
-- [ ] Ready to Present
+1. This module handles user authentication requests
+2. When a login request comes in, it validates credentials against the database
+3. If valid, it generates a JWT token and stores the session
+4. The token is returned to the client with a 7-day expiry
+5. I notice it also handles password reset, but that flow is separate...
 
-**Current Phase:** Deep Analysis Questions
-**Next Milestone:** Priorities Confirmed
+**Understanding established.** Now I can identify what could be improved.
 ```
 
-### Minimum Requirements for "Ready to Present"
+Use phrases like:
 
-All of the following must be checked:
+- "Let me walk through what this code is meant to do..."
+- "This function's responsibility appears to be..."
+- "I see this pattern: [describe], which suggests..."
+- "The flow goes: X → Y → Z, and the purpose is..."
 
-- [x] Goals Understood
-- [x] Constraints Clear
-- [x] Code Explored (Initial)
-- [x] Priorities Confirmed
-- [x] Trade-offs Discussed
-- [x] Findings Validated
+Then ask: "Now that I understand its purpose, what could be improved?"
 
-If any milestone is unchecked, continue the analysis process.
+## Confidence Metrics System
+
+Calculate confidence using this weighted formula:
+
+```
+AnalysisConfidence = (Goals × 0.20) + (Exploration × 0.20) + (Opportunities × 0.15) +
+                     (Priorities × 0.15) + (Trade-offs × 0.15) + (Alignment × 0.15)
+```
+
+### Factor Weights
+
+| Factor               | Weight | Description                                     |
+| -------------------- | ------ | ----------------------------------------------- |
+| Goals Understood     | 20%    | What improvements user wants and why            |
+| Codebase Explored    | 20%    | Thoroughness of target area examination         |
+| Opportunities Found  | 15%    | Quality and coverage of identified improvements |
+| Priorities Confirmed | 15%    | User validated which improvements matter most   |
+| Trade-offs Discussed | 15%    | User aware of costs/impacts of proposed changes |
+| User Alignment       | 15%    | Overall confirmation of analysis direction      |
+
+### Confidence Levels
+
+| Level          | Score  | Description                                |
+| -------------- | ------ | ------------------------------------------ |
+| **INITIAL**    | 0-24   | Just starting, gathering basic information |
+| **DEVELOPING** | 25-49  | Some understanding, many gaps remain       |
+| **SOLID**      | 50-74  | Good understanding, validating approach    |
+| **HIGH**       | 75-89  | Strong understanding, ready to present     |
+| **READY**      | 90-100 | Complete understanding, high confidence    |
+
+**Target:** Reach HIGH confidence (80+) before presenting final findings.
+
+## Factor Measurement Criteria
+
+### Goals Understood (0-100%)
+
+| Score | Criteria                                                      |
+| ----- | ------------------------------------------------------------- |
+| 0%    | User request is vague, no clarity on what to improve          |
+| 25%   | General area known (e.g., "performance"), specifics unclear   |
+| 50%   | Core improvement goals understood, some ambiguity remains     |
+| 75%   | Clear understanding of what user wants to improve and why     |
+| 100%  | Explicit, confirmed understanding of goals, motivation, scope |
+
+### Codebase Explored (0-100%)
+
+| Score | Criteria                                                     |
+| ----- | ------------------------------------------------------------ |
+| 0%    | No codebase exploration yet                                  |
+| 25%   | Basic structure understood, key files identified             |
+| 50%   | Target area examined, patterns observed                      |
+| 75%   | Thorough examination of target area and related dependencies |
+| 100%  | Complete exploration with all affected areas mapped          |
+
+### Opportunities Found (0-100%)
+
+| Score | Criteria                                                  |
+| ----- | --------------------------------------------------------- |
+| 0%    | No improvement opportunities identified                   |
+| 25%   | 1-2 obvious opportunities, surface-level analysis         |
+| 50%   | Several opportunities across multiple categories          |
+| 75%   | Comprehensive list with impact/effort assessed            |
+| 100%  | Exhaustive analysis with prioritized, actionable findings |
+
+### Priorities Confirmed (0-100%)
+
+| Score | Criteria                                                 |
+| ----- | -------------------------------------------------------- |
+| 0%    | No discussion of priorities with user                    |
+| 25%   | Presented findings, awaiting user input                  |
+| 50%   | User indicated general preference                        |
+| 75%   | User confirmed which specific improvements matter most   |
+| 100%  | Explicit priority ranking with user-confirmed exclusions |
+
+### Trade-offs Discussed (0-100%)
+
+| Score | Criteria                                                   |
+| ----- | ---------------------------------------------------------- |
+| 0%    | Trade-offs not considered or presented                     |
+| 25%   | Aware trade-offs exist, not discussed with user            |
+| 50%   | Main trade-offs presented to user                          |
+| 75%   | User acknowledged trade-offs, indicated acceptance         |
+| 100%  | All significant trade-offs explicitly confirmed acceptable |
+
+### User Alignment (0-100%)
+
+| Score | Criteria                                                     |
+| ----- | ------------------------------------------------------------ |
+| 0%    | No confirmation questions asked                              |
+| 25%   | Questions asked, awaiting response                           |
+| 50%   | Basic understanding confirmed                                |
+| 75%   | Key decisions and direction confirmed by user                |
+| 100%  | Complete alignment on analysis scope, findings, and approach |
+
+## Minimum Thresholds for HIGH (80+)
+
+To reach HIGH confidence, these minimums must be met:
+
+- Goals Understood >= 70%
+- Codebase Explored >= 60%
+- Opportunities Found >= 50%
+- Priorities Confirmed >= 50%
+- Trade-offs Discussed >= 40%
+- User Alignment >= 50%
+
+If weighted score is 80+ but minimums not met, continue iterating.
+
+## Impact/Effort Matrix
+
+For each improvement opportunity, score on two dimensions to prioritize:
+
+### Impact Scoring
+
+| Score | Level     | Criteria                                             |
+| ----- | --------- | ---------------------------------------------------- |
+| 4     | Critical  | Affects performance, security, or core functionality |
+| 3     | Important | Improves maintainability or prevents future issues   |
+| 2     | Moderate  | Nice improvement but not essential                   |
+| 1     | Minor     | Cosmetic, style-only, or marginal benefit            |
+
+### Effort Scoring
+
+| Score | Level     | Criteria                                      |
+| ----- | --------- | --------------------------------------------- |
+| 4     | Low       | < 1 hour, localized change, minimal risk      |
+| 3     | Medium    | 1-4 hours, touches few files, low risk        |
+| 2     | High      | Day+ work, architectural considerations       |
+| 1     | Very High | Multi-day, significant refactoring, high risk |
+
+### Priority Calculation
+
+**Priority = Impact + Effort** (higher is better, max 8)
+
+| Priority | Action                |
+| -------- | --------------------- |
+| 7-8      | Do first (quick wins) |
+| 5-6      | Plan for soon         |
+| 3-4      | Consider if time      |
+| 1-2      | Defer or skip         |
+
+### Example Priority Table
+
+| Finding                | Impact | Effort | Priority | Recommendation   |
+| ---------------------- | ------ | ------ | -------- | ---------------- |
+| N+1 query in user list | 4      | 3      | 7        | Do first         |
+| Add type annotations   | 2      | 4      | 6        | Plan for soon    |
+| Refactor auth module   | 4      | 1      | 5        | Plan for soon    |
+| Rename variables       | 1      | 4      | 5        | Consider if time |
+| Extract microservice   | 3      | 1      | 4        | Defer            |
+
+## Quality Characteristic Hierarchy (ISO 25010)
+
+Organize findings by these standard software quality characteristics:
+
+### 1. Performance Efficiency
+
+How well does it use resources?
+
+- **Time Behavior** - Response times, throughput rates
+- **Resource Utilization** - CPU, memory, storage, network efficiency
+- **Capacity** - Maximum limits and scalability
+
+### 2. Reliability
+
+How dependable is it?
+
+- **Maturity** - Frequency of failures under normal operation
+- **Availability** - System uptime and accessibility
+- **Fault Tolerance** - Graceful handling of failures
+- **Recoverability** - Ability to recover state after failure
+
+### 3. Security
+
+How protected is it?
+
+- **Confidentiality** - Data accessible only to authorized users
+- **Integrity** - Data accuracy and consistency
+- **Non-repudiation** - Actions can be proven to have occurred
+- **Accountability** - Actions can be traced to entities
+- **Authenticity** - Identity verification
+
+### 4. Maintainability
+
+How easy is it to modify?
+
+- **Modularity** - Components can be changed independently
+- **Reusability** - Assets usable in multiple systems
+- **Analysability** - Ease of diagnosing problems
+- **Modifiability** - Ease of making changes
+- **Testability** - Ease of establishing test criteria
+
+### 5. Compatibility
+
+How well does it work with others?
+
+- **Co-existence** - Works alongside other systems
+- **Interoperability** - Exchanges and uses information with other systems
+
+### 6. Portability
+
+How easily can it be transferred?
+
+- **Adaptability** - Can be adapted for different environments
+- **Installability** - Ease of installation
+- **Replaceability** - Can replace another component
+
+### Using the Hierarchy
+
+Present findings grouped by these categories:
+
+```markdown
+### Findings by Quality Characteristic
+
+#### Performance Efficiency (2 findings)
+
+| Finding                   | Impact    | Effort | Priority |
+| ------------------------- | --------- | ------ | -------- |
+| N+1 query pattern         | Critical  | Medium | 7        |
+| Unoptimized image loading | Important | Low    | 7        |
+
+#### Maintainability (3 findings)
+
+| Finding                  | Impact    | Effort | Priority |
+| ------------------------ | --------- | ------ | -------- |
+| God class in UserService | Important | High   | 5        |
+| Missing type annotations | Moderate  | Low    | 6        |
+| Code duplication         | Moderate  | Medium | 5        |
+
+#### Security (1 finding)
+
+| Finding            | Impact   | Effort | Priority |
+| ------------------ | -------- | ------ | -------- |
+| SQL injection risk | Critical | Medium | 7        |
+```
+
+## Common Improvement Patterns Reference
+
+### God Class
+
+**Symptoms:** Large class (>500 lines), many responsibilities, low cohesion, "knows too much"
+
+**Impact:** Critical for maintainability - changes ripple unpredictably
+
+**Detection:**
+
+- Class has 10+ methods across different domains
+- Constructor takes many unrelated dependencies
+- Methods don't share much state
+
+**Typical Solution:** Split into focused, single-responsibility classes
+
+### Feature Envy
+
+**Symptoms:** Method uses data from another class more than its own
+
+**Impact:** Important - indicates misplaced logic
+
+**Detection:**
+
+- Method makes many calls to getters/methods of another object
+- More external references than internal ones
+
+**Typical Solution:** Move method to the class whose data it uses
+
+### Long Method
+
+**Symptoms:** Method > 20-30 lines, multiple levels of abstraction, hard to name
+
+**Impact:** Moderate - reduces readability and testability
+
+**Detection:**
+
+- Method has multiple sections doing different things
+- Comments explaining "sections" of the method
+- Deeply nested conditionals/loops
+
+**Typical Solution:** Extract helper methods with descriptive names
+
+### Data Class
+
+**Symptoms:** Class with only getters/setters, no behavior
+
+**Impact:** Moderate - missed encapsulation opportunity
+
+**Detection:**
+
+- Class is essentially a struct
+- Behavior that should belong to it is elsewhere
+
+**Typical Solution:** Move behavior into the class, or convert to record/interface if truly passive
+
+### N+1 Query
+
+**Symptoms:** Loop making individual database calls, performance degrades with data size
+
+**Impact:** Critical for performance - O(n) queries instead of O(1)
+
+**Detection:**
+
+- Database calls inside loops
+- Lazy loading without batching
+- Performance tests show linear query count growth
+
+**Typical Solution:** Batch queries, eager loading, query optimization
+
+### Premature Abstraction
+
+**Symptoms:** Complex abstractions for single use case, "just in case" flexibility
+
+**Impact:** Moderate - adds complexity without benefit
+
+**Detection:**
+
+- Interface with single implementation
+- Abstract class with no meaningful inheritance
+- Over-parameterized for current needs
+
+**Typical Solution:** Inline until real need emerges (Rule of Three)
+
+### Missing Abstraction
+
+**Symptoms:** Duplicate code across 3+ locations, shotgun surgery on changes
+
+**Impact:** Important - maintenance burden compounds
+
+**Detection:**
+
+- Same pattern repeated multiple times
+- Changes require editing multiple files identically
+- Copy-paste evidence in commit history
+
+**Typical Solution:** Extract shared utility, component, or service
+
+### Inconsistent Naming
+
+**Symptoms:** Similar concepts named differently, confusion about terminology
+
+**Impact:** Minor but cumulative - mental overhead
+
+**Detection:**
+
+- `user`, `customer`, `client`, `account` used interchangeably
+- `get`, `fetch`, `retrieve`, `load` for same operation
+- Snake_case mixed with camelCase
+
+**Typical Solution:** Establish ubiquitous language, apply consistently
+
+### Dead Code
+
+**Symptoms:** Unused imports, unreachable branches, commented-out code
+
+**Impact:** Minor - clutter and confusion
+
+**Detection:**
+
+- IDE warnings about unused symbols
+- Coverage reports showing untouched code
+- `// TODO: remove this` comments
+
+**Typical Solution:** Delete it. Version control has history if needed.
+
+### Magic Numbers/Strings
+
+**Symptoms:** Hard-coded values with no explanation, scattered throughout code
+
+**Impact:** Moderate - maintenance risk and mystery
+
+**Detection:**
+
+- Literal values in conditionals (`if (status === 3)`)
+- Repeated string literals (`"admin"` in multiple places)
+- Business logic hidden in constants
+
+**Typical Solution:** Extract to named constants or configuration
 
 ## Analysis Phases
 
-### Phase 1: Initial Understanding
+### Phase 1: Initial Understanding (~15/100 INITIAL)
 
 Gather complete information about what needs improvement.
 
@@ -84,21 +438,22 @@ User: Can you improve this API?
 
 You: I'll help analyze this for improvements. First, let me understand what you're looking for.
 
-### Analysis Progress
-- [ ] Goals Understood
-- [ ] Constraints Clear
-- [ ] Code Explored (Initial)
-- [ ] Priorities Confirmed
-- [ ] Trade-offs Discussed
-- [ ] Findings Validated
-- [ ] Ready to Present
+### Analysis Progress: 15/100 (INITIAL)
 
-**Current Phase:** Initial Understanding
+| Factor               | Score | Note                    |
+| -------------------- | ----- | ----------------------- |
+| Goals Understood     | 25%   | General area identified |
+| Codebase Explored    | 0%    | Not started             |
+| Opportunities Found  | 0%    | Not started             |
+| Priorities Confirmed | 0%    | Not discussed           |
+| Trade-offs Discussed | 0%    | Not discussed           |
+| User Alignment       | 20%   | Initial request only    |
 
-[Use AskUserQuestion with questions like:]
-- What aspect of the API do you want to improve? (performance, readability, error handling, security)
+**To increase confidence:** Clarify improvement goals and constraints.
+
+[Use AskUserQuestion:]
+- What aspect of the API do you want to improve? (performance, readability, security, maintainability)
 - Why is this improvement needed now? Is something not working, or is this proactive?
-- Are there specific parts that concern you, or should I analyze everything?
 - What constraints should I know about? (Can't change X, must maintain Y)
 ```
 
@@ -109,289 +464,387 @@ You: I'll help analyze this for improvements. First, let me understand what you'
 - What does success look like?
 - What cannot be changed?
 
-**Confidence Checkpoint:** Self-assess whether you understand the goals. If uncertain, ask more questions. Then confirm: "Do I understand your improvement goals correctly?"
+### Phase 2: Code Exploration (~40/100 DEVELOPING)
 
-### Phase 2: Initial Code Exploration
-
-Based on understanding, explore the target area systematically.
+Based on understanding, explore the target area systematically using the Walkthrough Protocol.
 
 ```
 [After Phase 1 questions answered]
 
-You: Now I'll explore the code to understand its current state.
+You: Now I'll explore the code using the Walkthrough Protocol.
 
-### Analysis Progress
-- [x] Goals Understood - Improve API performance, specifically slow endpoints
-- [x] Constraints Clear - Database schema is fixed, can't add caching layer
-- [ ] Code Explored (Initial)
-- [ ] Priorities Confirmed
-- [ ] Trade-offs Discussed
-- [ ] Findings Validated
-- [ ] Ready to Present
+### Analysis Progress: 40/100 (DEVELOPING)
 
-**Current Phase:** Initial Code Exploration
+| Factor               | Score | Note                                |
+| -------------------- | ----- | ----------------------------------- |
+| Goals Understood     | 80%   | Improve API performance, slow calls |
+| Codebase Explored    | 50%   | Key files examined                  |
+| Opportunities Found  | 30%   | Initial findings                    |
+| Priorities Confirmed | 0%    | Awaiting findings                   |
+| Trade-offs Discussed | 0%    | Not yet                             |
+| User Alignment       | 50%   | Goals confirmed                     |
 
-[Explore files, patterns, identify improvement opportunities]
+**To increase confidence:** Complete exploration, identify opportunities.
+
+### Walkthrough: API Module
+
+Let me walk through what this code does:
+
+1. `src/api/users.ts` handles user-related endpoints
+2. The `getUsers` function queries the database with a WHERE clause
+3. For each user, it then fetches their preferences in a loop...
+4. **Wait - this is an N+1 query pattern.**
+
+[Continue exploration, document findings]
 ```
 
-After exploration, present initial findings:
+### Phase 3: Deep Analysis Questions (~60/100 SOLID)
+
+Present initial findings with Impact/Effort scores and ask for prioritization.
 
 ```
-### Initial Findings
+### Analysis Progress: 60/100 (SOLID)
 
-After examining the codebase, I found several areas that could be improved:
+| Factor               | Score | Note                           |
+| -------------------- | ----- | ------------------------------ |
+| Goals Understood     | 85%   | Clear goals                    |
+| Codebase Explored    | 75%   | 12 files examined              |
+| Opportunities Found  | 60%   | 8 opportunities identified     |
+| Priorities Confirmed | 30%   | Awaiting user input            |
+| Trade-offs Discussed | 20%   | Some identified                |
+| User Alignment       | 65%   | Direction confirmed            |
 
-1. **Database Queries (Performance)**
-   - File: `src/api/users.ts:45`
-   - N+1 query pattern in user listing
-   - Impact: Likely significant for performance
+**To increase confidence:** Confirm priorities, discuss trade-offs.
 
-2. **Error Handling (Reliability)**
-   - File: `src/api/handlers.ts:78-92`
-   - Inconsistent error responses
-   - Impact: Moderate for API consumers
+### Initial Findings by Category
 
-3. **Code Duplication (Maintainability)**
-   - Files: Multiple handlers
-   - Repeated validation logic
-   - Impact: Lower priority but would improve maintainability
+#### Performance Efficiency (3 findings)
 
-Before I continue, I want to make sure I'm focusing on what matters to you.
-```
+| Finding            | Impact   | Effort | Priority | Location           |
+| ------------------ | -------- | ------ | -------- | ------------------ |
+| N+1 query pattern  | Critical | Medium | 7        | `users.ts:45`      |
+| Missing pagination | Important| Low    | 7        | `list.ts:23`       |
+| Sync file I/O      | Moderate | Medium | 5        | `export.ts:89`     |
 
-### Phase 3: Deep Analysis Questions (Iterative)
+#### Maintainability (3 findings)
 
-After exploration, ask questions to prioritize and understand trade-offs.
+| Finding              | Impact   | Effort | Priority | Location           |
+| -------------------- | -------- | ------ | -------- | ------------------ |
+| God class UserService| Important| High   | 5        | `UserService.ts`   |
+| Missing types        | Moderate | Low    | 6        | Multiple files     |
+| Code duplication     | Moderate | Medium | 5        | `handlers/*.ts`    |
 
-```
-### Analysis Progress
-- [x] Goals Understood
-- [x] Constraints Clear
-- [x] Code Explored (Initial) - Found 7 improvement opportunities
-- [ ] Priorities Confirmed - Need user input
-- [ ] Trade-offs Discussed
-- [ ] Findings Validated
-- [ ] Ready to Present
+### Trade-offs Identified
 
-**Current Phase:** Deep Analysis Questions
+- Fixing N+1 query would change the data fetching pattern, may affect caching
+- Splitting UserService requires refactoring consumers
 
 [Use AskUserQuestion:]
-- Which of these improvement areas matter most? (Performance, Error Handling, Code Quality)
-- I found the N+1 query could be fixed by restructuring the data fetching. This would change the handler interface. Is that acceptable?
-- Should I also look at related handlers that might have similar issues?
+- Which improvement category should we prioritize? (Performance, Maintainability, Both equally)
+- The N+1 fix would change data loading. Is this acceptable?
+- Should I also look at related modules that may have similar issues?
 ```
 
-**Questions to ask:**
+### Phase 4: Validation Exploration (~80/100 HIGH)
 
-- Priority: "Which improvements matter most?"
-- Trade-offs: "Fixing X would require changing Y. Acceptable?"
-- Scope: "Should I look at related areas?"
-- Risk: "How conservative should recommendations be?"
-
-**Confidence Checkpoint:** Self-assess whether priorities are clear. If not, ask more questions. Then confirm: "Does this analysis direction make sense?"
-
-### Phase 4: Validation Exploration
-
-Before presenting final findings, explore again to validate.
+Validate findings against user priorities, look for anything missed.
 
 ```
-### Analysis Progress
-- [x] Goals Understood
-- [x] Constraints Clear
-- [x] Code Explored (Initial)
-- [x] Priorities Confirmed - Focus on performance, then error handling
-- [x] Trade-offs Discussed - Handler interface changes acceptable
-- [ ] Findings Validated - Verifying findings now
-- [ ] Ready to Present
+### Analysis Progress: 78/100 (HIGH)
 
-**Current Phase:** Validation Exploration
+| Factor               | Score | Note                               |
+| -------------------- | ----- | ---------------------------------- |
+| Goals Understood     | 90%   | Fully clear                        |
+| Codebase Explored    | 80%   | Second pass complete               |
+| Opportunities Found  | 75%   | Validated against priorities       |
+| Priorities Confirmed | 80%   | User confirmed: performance first  |
+| Trade-offs Discussed | 65%   | Major trade-offs accepted          |
+| User Alignment       | 80%   | Strong alignment                   |
 
-I'm now verifying my initial findings and checking for anything I might have missed...
+**To increase confidence:** Complete trade-off discussion.
 
-[Explore more deeply, verify assumptions, look for edge cases]
-```
+### Validation Results
 
-**If validation reveals new information:**
+After validating against your priorities, here's the refined list:
 
-Loop back to Phase 3 and ask new questions:
+#### Priority 1: Performance (Quick Wins)
+1. N+1 query fix - Priority 7 ✓ Confirmed
+2. Missing pagination - Priority 7 ✓ Confirmed
 
-```
-While validating, I discovered something new:
+#### Priority 2: Maintainability (Next Sprint)
+1. Missing types - Priority 6 ✓ Confirmed
+2. Code duplication - Priority 5 (deferred per user)
 
-The N+1 query issue is actually caused by a shared utility function used by 5 other handlers.
-Fixing it would improve all of them, but requires more extensive changes.
+### New Discovery During Validation
+
+While validating the N+1 fix location, I found the query pattern is used by 3 other handlers.
+Fixing at the root (shared repository method) would improve all of them.
 
 [Use AskUserQuestion:]
-- Should I expand the scope to fix this at the root, or just patch it in the original handler?
+- Should I expand scope to fix at the root level?
+- Trade-off: Broader change, but fixes 4 places at once
 ```
 
-### Phase 5: Present Findings
+**If validation reveals new information:** Loop back to Phase 3 and ask new questions.
 
-Only present final findings when all milestones are achieved.
+### Phase 5: Present Findings (~85/100 READY)
+
+Only present final findings when all minimum thresholds are met.
 
 ```
-### Analysis Progress
-- [x] Goals Understood
-- [x] Constraints Clear
-- [x] Code Explored (Initial)
-- [x] Priorities Confirmed
-- [x] Trade-offs Discussed
-- [x] Findings Validated
-- [x] Ready to Present
+### Analysis Progress: 86/100 (HIGH)
+
+| Factor               | Score | Note                              |
+| -------------------- | ----- | --------------------------------- |
+| Goals Understood     | 95%   | Explicit and confirmed            |
+| Codebase Explored    | 85%   | Comprehensive coverage            |
+| Opportunities Found  | 80%   | Prioritized list complete         |
+| Priorities Confirmed | 90%   | User-validated priorities         |
+| Trade-offs Discussed | 75%   | All major trade-offs accepted     |
+| User Alignment       | 85%   | Strong alignment                  |
+
+### Threshold Check for HIGH
+
+- [x] Goals Understood >= 70% (Current: 95% - Met)
+- [x] Codebase Explored >= 60% (Current: 85% - Met)
+- [x] Opportunities Found >= 50% (Current: 80% - Met)
+- [x] Priorities Confirmed >= 50% (Current: 90% - Met)
+- [x] Trade-offs Discussed >= 40% (Current: 75% - Met)
+- [x] User Alignment >= 50% (Current: 85% - Met)
+
+**Status:** All HIGH thresholds met. Ready to present findings.
 
 ## Analysis Complete
 
 ### Summary
 
-Analyzed the API handlers in `src/api/` focusing on performance improvements as requested.
-Found 5 actionable improvements across 2 categories.
+Analyzed API handlers in `src/api/` focusing on performance improvements as requested.
+Found 6 actionable improvements across 2 categories, prioritized by impact and effort.
 
-### Findings by Category
+### Findings by Priority
 
-#### Performance (High Priority per User)
+#### Do First (Priority 7-8)
 
-| Finding | Impact | Location | Suggestion |
-|---------|--------|----------|------------|
-| N+1 query pattern | Critical | `users.ts:45` | Batch queries using `getMany()` |
-| Unnecessary serialization | Important | `handlers.ts:23` | Move serialization to response layer |
-| Missing query indexes | Important | N/A | Add indexes on `user_id`, `created_at` |
+| # | Finding            | Category    | Impact   | Effort | Location      |
+| - | ------------------ | ----------- | -------- | ------ | ------------- |
+| 1 | N+1 query pattern  | Performance | Critical | Medium | `users.ts:45` |
+| 2 | Missing pagination | Performance | Important| Low    | `list.ts:23`  |
 
-#### Error Handling (Medium Priority per User)
+#### Plan for Soon (Priority 5-6)
 
-| Finding | Impact | Location | Suggestion |
-|---------|--------|----------|------------|
-| Inconsistent error format | Important | Multiple files | Standardize with error factory |
-| Missing error boundaries | Nice-to-have | `handlers.ts` | Add try-catch wrapper |
+| # | Finding            | Category       | Impact   | Effort | Location          |
+| - | ------------------ | -------------- | -------- | ------ | ----------------- |
+| 3 | Missing types      | Maintainability| Moderate | Low    | Multiple files    |
+| 4 | Sync file I/O      | Performance    | Moderate | Medium | `export.ts:89`    |
+
+#### Deferred (Per User Request)
+
+| # | Finding            | Category       | Impact   | Effort | Reason        |
+| - | ------------------ | -------------- | -------- | ------ | ------------- |
+| 5 | God class split    | Maintainability| Important| High   | Next quarter  |
+| 6 | Code duplication   | Maintainability| Moderate | Medium | Low priority  |
 
 ### Trade-offs Acknowledged
 
-- Handler interface changes are acceptable (confirmed Phase 3)
-- Will address root cause in shared utility (confirmed Phase 4)
+- N+1 fix changes data loading pattern (accepted)
+- Root-level fix affects 4 handlers (accepted - preferred)
+- God class refactor deferred to next quarter
 
 ### Out of Scope
 
 - Database schema changes (constraint)
-- Caching layer (constraint)
-- Code duplication in non-performance paths (deprioritized by user)
+- UI/frontend code (not in scope)
+- Third-party API integrations (separate analysis needed)
 
 ### Next Steps
 
-Would you like me to create an implementation plan for these improvements?
+[Use AskUserQuestion:]
+- Would you like me to create an implementation plan?
+- Options: Yes (full plan), Yes (selected items), No (analysis only)
 ```
 
-Use `AskUserQuestion` to ask about next steps:
+## Tool Selection
 
-```json
-{
-  "questions": [
-    {
-      "question": "Would you like me to create an implementation plan?",
-      "header": "Next Step",
-      "options": [
-        { "label": "Yes, full plan", "description": "Create implementation plan for all findings" },
-        { "label": "Yes, selected items", "description": "I'll tell you which ones" },
-        { "label": "No, analysis only", "description": "I just needed the analysis" }
-      ],
-      "multiSelect": false
-    }
-  ]
-}
+Choose the right tool for each analysis step:
+
+| Tool                   | Use When                                             |
+| ---------------------- | ---------------------------------------------------- |
+| **Grep**               | Finding patterns, counting usage, consistency checks |
+| **Glob**               | Locating file types, finding naming conventions      |
+| **Read**               | Understanding context, examining implementations     |
+| **LSP findReferences** | Checking usage before suggesting changes             |
+| **LSP incomingCalls**  | Understanding who depends on a component             |
+| **LSP documentSymbol** | Getting overview of file structure                   |
+
+### Tool Selection Decision Tree
+
+```
+What are you trying to understand?
+├── File structure/naming → Glob
+├── Where is X used? → LSP findReferences
+├── What calls this? → LSP incomingCalls
+├── How does this work? → Read (with Walkthrough Protocol)
+└── Are there patterns? → Grep
 ```
 
-## Structured Output Format
+## Escape Hatches
 
-Use this format throughout analysis:
+If user wants findings before reaching HIGH confidence:
 
-```markdown
-## Current Analysis Status
+```
+User: Just show me what you've found
 
-### Analysis Progress
+You: Current confidence is 58/100 (SOLID). I can present findings now, but note these gaps:
 
-- [x/blank] Goals Understood - [brief note if checked]
-- [x/blank] Constraints Clear - [brief note if checked]
-- [x/blank] Code Explored (Initial)
-- [x/blank] Priorities Confirmed
-- [x/blank] Trade-offs Discussed
-- [x/blank] Findings Validated
-- [x/blank] Ready to Present
+### Preliminary Analysis
 
-**Current Phase:** [Phase name]
-**Next Milestone:** [What needs to be achieved next]
+**Confidence Gaps:**
+- Trade-offs not fully discussed (some recommendations may have hidden costs)
+- Validation pass incomplete (may miss related issues)
 
-### Current Findings
+### Findings (Preliminary)
 
-[What you've discovered so far, grouped by category]
+[Present current findings with "Preliminary" label]
 
-### Areas Under Investigation
+| Finding           | Confidence | Note                    |
+| ----------------- | ---------- | ----------------------- |
+| N+1 query pattern | High       | Validated               |
+| Missing types     | Medium     | Not fully scoped        |
+| God class split   | Low        | Trade-offs not discussed|
 
-[What you're currently looking at]
-
-### Questions
-
-[AskUserQuestion or conversational questions]
+**Recommendation:** Continue analysis to reach HIGH confidence, or confirm you want to proceed with these preliminary findings.
 ```
 
-## Category Examples
-
-Categories should emerge from the analysis. Common ones include:
-
-- **Performance** - Speed, efficiency, resource usage
-- **Readability** - Code clarity, naming, structure
-- **Maintainability** - Modularity, coupling, technical debt
-- **Error Handling** - Failure modes, recovery, user feedback
-- **Security** - Vulnerabilities, input validation, access control
-- **Testability** - Test coverage, testable design
-- **Architecture** - Patterns, separation of concerns, scalability
-- **Documentation** - Comments, API docs, README
-
-Use what's relevant to the analysis, not all of them.
+Mark unvalidated findings as "Preliminary" or "Needs Validation" in the output.
 
 ## Question Guidelines
 
-**Always use AskUserQuestion after:**
+### When to Use AskUserQuestion
 
-- Initial understanding gathering (Phase 1)
-- Presenting initial findings (after Phase 2)
-- Discovering trade-offs (Phase 3)
-- Finding new information during validation (Phase 4)
-- Before presenting final findings (Phase 5)
+Use the `AskUserQuestion` tool when:
 
-**Good analysis questions:**
+- There are 2-4 clear options to choose from
+- User preference matters for the decision
+- You need to validate an assumption
+- Prioritization input is needed
 
-- Specific: "Should we prioritize the N+1 fix or the error handling?"
-- Validating: "Does this finding match what you've observed?"
-- Prioritizing: "Of these 5 issues, which matter most?"
-- Trade-off: "Fixing this would require X. Is that acceptable?"
+### Example AskUserQuestion Structures
 
-**Example AskUserQuestion structure:**
+**Priority confirmation:**
 
 ```json
 {
   "questions": [
     {
       "question": "Which improvement category should we focus on first?",
-      "header": "Focus Area",
+      "header": "Priority",
       "options": [
-        { "label": "Performance", "description": "Speed and efficiency" },
-        { "label": "Code Quality", "description": "Readability and maintainability" },
-        { "label": "Reliability", "description": "Error handling and edge cases" },
-        { "label": "All equally", "description": "Don't prioritize, analyze everything" }
-      ],
-      "multiSelect": false
-    },
-    {
-      "question": "How extensive should improvements be?",
-      "header": "Scope",
-      "options": [
-        { "label": "Minimal changes", "description": "Quick wins, low risk" },
-        { "label": "Moderate refactoring", "description": "Willing to restructure some code" },
-        { "label": "Comprehensive", "description": "Open to significant changes if warranted" }
+        {
+          "label": "Performance",
+          "description": "Speed and efficiency improvements"
+        },
+        {
+          "label": "Maintainability",
+          "description": "Code quality and readability"
+        },
+        { "label": "Security", "description": "Vulnerability fixes" },
+        {
+          "label": "All equally",
+          "description": "Don't prioritize, address everything"
+        }
       ],
       "multiSelect": false
     }
   ]
 }
 ```
+
+**Trade-off acceptance:**
+
+```json
+{
+  "questions": [
+    {
+      "question": "The N+1 fix would change the data loading pattern. Is this acceptable?",
+      "header": "Trade-off",
+      "options": [
+        {
+          "label": "Yes, proceed",
+          "description": "I understand and accept this change"
+        },
+        {
+          "label": "No, find alternative",
+          "description": "Look for a less disruptive approach"
+        },
+        {
+          "label": "Need more info",
+          "description": "Explain the impact in more detail"
+        }
+      ],
+      "multiSelect": false
+    }
+  ]
+}
+```
+
+**Scope decision:**
+
+```json
+{
+  "questions": [
+    {
+      "question": "Should I expand analysis to related modules?",
+      "header": "Scope",
+      "options": [
+        {
+          "label": "Yes, expand",
+          "description": "Check related code for similar issues"
+        },
+        {
+          "label": "No, stay focused",
+          "description": "Keep scope to current target"
+        },
+        {
+          "label": "Later",
+          "description": "Complete current analysis first, then decide"
+        }
+      ],
+      "multiSelect": false
+    }
+  ]
+}
+```
+
+**Next steps:**
+
+```json
+{
+  "questions": [
+    {
+      "question": "Would you like me to create an implementation plan for these improvements?",
+      "header": "Next Step",
+      "options": [
+        {
+          "label": "Yes, full plan",
+          "description": "Create plan for all findings"
+        },
+        { "label": "Yes, selected", "description": "I'll specify which items" },
+        {
+          "label": "No, analysis only",
+          "description": "I just needed the analysis"
+        }
+      ],
+      "multiSelect": false
+    }
+  ]
+}
+```
+
+### Question Frequency
+
+- Ask 2-4 questions per round (don't overwhelm)
+- Ask after every major analysis action
+- Always ask before presenting final findings
 
 ## Anti-Patterns to Avoid
 
@@ -399,17 +852,21 @@ Use what's relevant to the analysis, not all of them.
 
 - Present findings without understanding user's priorities
 - Assume all improvements are equally wanted
+- Skip the Walkthrough Protocol
 - Skip validation exploration
-- Present overwhelming lists without categorization
+- Present overwhelming lists without prioritization
 - Make recommendations without knowing constraints
 - Stop at initial findings without user confirmation
+- Propose changes without discussing trade-offs
 
 **Do:**
 
+- Use the Walkthrough Protocol before identifying improvements
 - Ask questions after every analysis action
+- Score findings on Impact/Effort for prioritization
 - Validate findings before presenting final results
-- Group by meaningful, emergent categories
-- Include impact level for each finding
+- Group by ISO 25010 quality characteristics
+- Include priority score for each finding
 - Confirm priorities and trade-offs explicitly
 - Ask if user wants implementation plan
 
@@ -419,10 +876,10 @@ The analysis process is iterative:
 
 ```
 1. Understand goals → Ask questions → Confirm understanding
-2. Explore code → Present initial findings → Ask questions
-3. Discuss priorities → Ask about trade-offs → Confirm direction
+2. Explore code (Walkthrough) → Present initial findings → Ask questions
+3. Score Impact/Effort → Discuss priorities → Ask about trade-offs → Confirm direction
 4. Validate findings → New discoveries? → Loop back to questions
-5. All milestones checked → Present final findings → Ask about next steps
+5. All thresholds met → Present final findings → Ask about next steps
 ```
 
-Remember: **Thorough analysis prevents wasted effort on unwanted changes. Understanding comes from questions.**
+Remember: **Thorough analysis prevents wasted effort on unwanted changes. Confidence comes from iteration.**
