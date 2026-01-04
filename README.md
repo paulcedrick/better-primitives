@@ -1,40 +1,41 @@
-# Better Plan Mode
+# Better Primitives
 
-A Claude Code plugin that enhances planning by making Claude proactively ask in-depth questions before making assumptions.
+A Claude Code plugin providing enhanced planning and debugging with thorough, question-driven approaches.
 
-## What It Does
+## Commands
 
-- **Asks questions before exploring code** - Clarifies requirements and intent first
-- **Asks questions after exploring code** - Surfaces technical decisions that need input
-- **Confirms understanding before planning** - Summarizes and validates before proceeding
-- **Uses AskUserQuestion tool** - Structured questions with clear options
+| Command                    | Description                                             |
+| -------------------------- | ------------------------------------------------------- |
+| `/better-primitives:plan`  | Enhanced planning with thorough questioning             |
+| `/better-primitives:debug` | Thorough debugging with confidence-scored investigation |
 
 ## Installation
 
 ### From GitHub
 
 ```bash
-# Add the marketplace
-/plugin marketplace add paulcedrick/better-plan-mode
-
-# Install the plugin
-/plugin install better-plan-mode@paulcedrick-better-plan-mode
+claude plugin install paulcedrick/better-primitives
 ```
 
-### Local Testing
+### Local Development
 
 ```bash
-claude --plugin-dir /path/to/better-plan-mode
+# Clone the repository
+git clone https://github.com/paulcedrick/better-primitives.git
+cd better-primitives
+
+# Install locally
+claude plugin install .
 ```
 
 ## Usage
 
-### Explicit Planning
+### Plan Command
 
-Use the `/plan` command to start enhanced planning:
+Use `/better-primitives:plan` to start enhanced planning:
 
 ```
-/plan Add user authentication to the app
+/better-primitives:plan Add user authentication to the app
 ```
 
 Claude will:
@@ -45,68 +46,38 @@ Claude will:
 4. Confirm understanding
 5. Present a focused implementation plan
 
-### Automatic Behavior
+The `thorough-planning` skill also activates automatically when Claude detects ambiguous requirements or multiple valid approaches.
 
-The `thorough-planning` skill also activates automatically when Claude detects:
+### Debug Command
 
-- Feature implementation requests
-- Ambiguous requirements
-- Multiple valid approaches
-
-## Question Categories
-
-The plugin guides Claude to ask about:
-
-| Category         | Example Questions                                      |
-| ---------------- | ------------------------------------------------------ |
-| **Requirements** | What exactly should be built? What are the edge cases? |
-| **Scope**        | MVP or production-ready? What's in vs out of scope?    |
-| **Technical**    | Which patterns to follow? Which libraries to use?      |
-
-## Example Interaction
+Use `/better-primitives:debug` to start thorough debugging:
 
 ```
-User: /plan Add a settings page
-
-Claude: Before I explore your codebase, I want to understand what you need.
-
-[AskUserQuestion]
-- What settings should users be able to configure?
-- Should settings persist locally or sync across devices?
-- Any specific UI framework preferences?
-
-User: [Answers questions]
-
-Claude: I've explored your codebase. I see you're using React with Tailwind.
-
-[AskUserQuestion]
-- Should I follow your existing page layout pattern from Dashboard.tsx?
-- I noticed you use React Query for state. Use that for settings too?
-
-User: [Answers questions]
-
-Claude: Here's my understanding:
-- Settings page with theme, notifications, and account preferences
-- Local storage for now, sync later
-- Following existing React/Tailwind patterns
-
-Is this correct?
-
-User: Yes
-
-Claude: [Presents focused implementation plan]
+/better-primitives:debug The API returns 500 errors intermittently
 ```
 
-## Plugin Structure
+Claude will:
+
+1. Gather symptoms with clarifying questions
+2. Form hypotheses and present them with confidence scores
+3. Investigate code systematically, asking confirmation questions
+4. Present root cause with evidence when confidence reaches HIGH (75+)
+
+The `thorough-debugging` skill also activates automatically when Claude detects bug reports, error messages, or unexpected behavior.
+
+## Structure
 
 ```
-better-plan-mode/
+better-primitives/
 ├── .claude-plugin/
 │   └── plugin.json
 ├── commands/
-│   └── plan.md
+│   ├── plan.md
+│   └── debug.md
 ├── skills/
-│   └── thorough-planning/
+│   ├── thorough-planning/
+│   │   └── SKILL.md
+│   └── thorough-debugging/
 │       └── SKILL.md
 └── README.md
 ```
