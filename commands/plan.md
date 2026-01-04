@@ -1,100 +1,368 @@
 ---
-description: Start enhanced planning with thorough questioning. Use this when you want Claude to deeply understand your requirements before planning implementation.
+description: Start enhanced planning with thorough questioning. Uses iterative confidence metrics to deeply understand requirements before planning implementation.
 ---
 
 # Enhanced Planning Mode
 
-You are now in enhanced planning mode. Your goal is to achieve **complete understanding** of the user's intent before creating any implementation plan.
+You are now in enhanced planning mode. Your goal is to achieve **high confidence** in your understanding before presenting an implementation plan.
 
 ## Core Principle
 
-**Do not assume. Ask.**
+**Iterate until confident. Ask, explore, validate, repeat.**
 
-Confidence comes from questions, not assumptions. If you're uncertain about anything, ask. Multiple rounds of questions are expected and encouraged.
+Planning is an iterative process. Keep gathering information, asking questions, and validating understanding until you reach HIGH confidence (80+). Only then present the plan.
 
-## Planning Process
+## Confidence Metrics System
 
-### Phase 1: Initial Understanding (Before Code Exploration)
+Calculate and display confidence using this weighted formula:
 
-Start by understanding the request in plain language. Use the `AskUserQuestion` tool to ask about:
+```
+PlanConfidence = (Intent × 0.25) + (Context × 0.20) + (Requirements × 0.15) +
+                 (Solution × 0.20) + (Risk × 0.10) + (Alignment × 0.10)
+```
 
-**Requirements Clarification**
+### Factor Weights
 
-- What exactly needs to be built? Be specific.
-- What problem is this solving? Why is this needed?
-- What does success look like? How will you know it's working?
-- Are there edge cases to handle? What happens when things go wrong?
-- Are there constraints (performance, security, compatibility)?
+| Factor                   | Weight | Description                                        |
+| ------------------------ | ------ | -------------------------------------------------- |
+| Intent Clarity           | 25%    | How well you understand what the user wants        |
+| Context Completeness     | 20%    | How much relevant codebase context you've gathered |
+| Requirements Specificity | 15%    | Clarity of scope, constraints, and edge cases      |
+| Solution Viability       | 20%    | Confidence the proposed approach will work         |
+| Risk Assessment          | 10%    | How well you've identified potential issues        |
+| User Alignment           | 10%    | User confirmations received during planning        |
 
-**Scope Boundaries**
+### Confidence Levels
 
-- Is this MVP/prototype or production-ready?
-- What's explicitly in scope vs out of scope?
-- What can be deferred to later?
-- Are there related changes that should be considered together?
+| Level          | Score  | Description                                  |
+| -------------- | ------ | -------------------------------------------- |
+| **INITIAL**    | 0-24   | Just starting, gathering basic information   |
+| **DEVELOPING** | 25-49  | Some understanding, many gaps remain         |
+| **SOLID**      | 50-74  | Good understanding, validating approach      |
+| **HIGH**       | 75-89  | Strong understanding, ready to present plan  |
+| **READY**      | 90-100 | Complete understanding, high confidence plan |
 
-Ask 2-4 questions at a time using `AskUserQuestion`. Don't overwhelm, but be thorough.
+**Target:** Reach HIGH confidence (80+) before presenting the plan.
 
-### Phase 2: Code Exploration
+## Factor Measurement Criteria
 
-After initial understanding, explore the codebase to understand:
+### Intent Clarity (0-100%)
 
-- Existing patterns and conventions
-- Related code that might be affected
-- Technical constraints from the current architecture
+| Score | Criteria                                                  |
+| ----- | --------------------------------------------------------- |
+| 0%    | User request is vague or unclear                          |
+| 25%   | General idea understood, specifics unclear                |
+| 50%   | Core goal understood, some ambiguity remains              |
+| 75%   | Clear understanding of what user wants                    |
+| 100%  | Explicit, confirmed understanding of goals and motivation |
 
-### Phase 3: Technical Decisions (After Code Exploration)
+### Context Completeness (0-100%)
 
-Based on what you found, use `AskUserQuestion` again to clarify:
+| Score | Criteria                                           |
+| ----- | -------------------------------------------------- |
+| 0%    | No codebase exploration yet                        |
+| 25%   | Basic project structure understood                 |
+| 50%   | Key files and patterns identified                  |
+| 75%   | Relevant code thoroughly examined                  |
+| 100%  | All affected areas mapped, dependencies understood |
 
-**Technical Approach**
+### Requirements Specificity (0-100%)
 
-- Which of the existing patterns should be followed?
-- Are there multiple valid approaches? Present trade-offs and ask for preference.
-- Which libraries or frameworks should be used?
-- How does this fit with the existing architecture?
+| Score | Criteria                                                  |
+| ----- | --------------------------------------------------------- |
+| 0%    | Scope and constraints unknown                             |
+| 25%   | Basic scope defined                                       |
+| 50%   | Scope clear, some constraints identified                  |
+| 75%   | Clear scope, constraints, and main edge cases             |
+| 100%  | Comprehensive requirements with all edge cases documented |
 
-### Phase 4: Confirm Understanding
+### Solution Viability (0-100%)
 
-Before presenting the final plan, summarize your understanding:
+| Score | Criteria                                       |
+| ----- | ---------------------------------------------- |
+| 0%    | No approach identified                         |
+| 25%   | General direction known                        |
+| 50%   | Approach identified, feasibility uncertain     |
+| 75%   | Validated approach with evidence from codebase |
+| 100%  | Proven approach with clear implementation path |
 
-"Based on our discussion, here's what I understand:
+### Risk Assessment (0-100%)
 
-- [Requirement 1]
-- [Requirement 2]
-- [Technical approach]
-- [Scope]
+| Score | Criteria                                               |
+| ----- | ------------------------------------------------------ |
+| 0%    | Risks not considered                                   |
+| 25%   | Aware risks exist, not enumerated                      |
+| 50%   | Main risks identified                                  |
+| 75%   | Risks identified with potential mitigations            |
+| 100%  | Comprehensive risk analysis with mitigation strategies |
 
-Is this correct? Anything to add or change?"
+### User Alignment (0-100%)
 
-Only proceed to the implementation plan once confirmed.
+| Score | Criteria                                                |
+| ----- | ------------------------------------------------------- |
+| 0%    | No confirmation questions asked                         |
+| 25%   | Questions asked, awaiting response                      |
+| 50%   | Basic understanding confirmed                           |
+| 75%   | Key decisions confirmed by user                         |
+| 100%  | All major decisions and trade-offs explicitly confirmed |
 
-## Question Guidelines
+## Planning Process (Iterative)
 
-**Good questions are:**
+### Iteration Loop
 
-- Specific, not vague ("Which auth method: OAuth, JWT, or session-based?" not "How should auth work?")
-- Actionable (the answer directly influences the plan)
-- Non-obvious (don't ask what can be clearly inferred)
+```
+1. Assess current confidence → Display metrics
+2. Identify lowest-scoring factor → Target for improvement
+3. Take action (ask question, explore code, validate assumption)
+4. Recalculate confidence → Display updated metrics
+5. Confidence < 80%? → Return to step 2
+6. Confidence >= 80% → Present plan with approval question
+```
+
+### Starting Point (~12/100 INITIAL)
+
+When planning begins:
+
+```markdown
+### Planning Progress: 12/100 (INITIAL)
+
+| Factor                   | Score | Note                   |
+| ------------------------ | ----- | ---------------------- |
+| Intent Clarity           | 20%   | Basic request received |
+| Context Completeness     | 0%    | No exploration yet     |
+| Requirements Specificity | 10%   | Scope unclear          |
+| Solution Viability       | 0%    | No approach yet        |
+| Risk Assessment          | 0%    | Not assessed           |
+| User Alignment           | 10%   | Initial request only   |
+
+**To increase confidence:** Clarify intent and understand what user wants to achieve.
+```
+
+### Mid-Planning (~55/100 SOLID)
+
+After some iteration:
+
+```markdown
+### Planning Progress: 55/100 (SOLID)
+
+| Factor                   | Score | Note                          |
+| ------------------------ | ----- | ----------------------------- |
+| Intent Clarity           | 80%   | Goals confirmed               |
+| Context Completeness     | 60%   | Key files examined            |
+| Requirements Specificity | 50%   | Scope defined, edge cases TBD |
+| Solution Viability       | 45%   | 2 approaches identified       |
+| Risk Assessment          | 30%   | Some risks noted              |
+| User Alignment           | 60%   | 2 decisions confirmed         |
+
+**To increase confidence:** Validate approach viability, identify edge cases.
+```
+
+### Ready to Present (~82/100 HIGH)
+
+When threshold met:
+
+```markdown
+### Planning Progress: 82/100 (HIGH)
+
+| Factor                   | Score | Note                           |
+| ------------------------ | ----- | ------------------------------ |
+| Intent Clarity           | 95%   | Clear, confirmed goals         |
+| Context Completeness     | 80%   | All relevant code examined     |
+| Requirements Specificity | 75%   | Scope + edge cases documented  |
+| Solution Viability       | 85%   | Approach validated in codebase |
+| Risk Assessment          | 70%   | Key risks with mitigations     |
+| User Alignment           | 80%   | Major decisions confirmed      |
+
+**Threshold met.** Ready to present implementation plan.
+```
+
+## Questioning Strategy
+
+### Prioritize Low-Scoring Factors
+
+Target questions at factors with lowest scores. Examples:
+
+**Intent Clarity low?** Ask:
+
+- What exactly needs to be built?
+- What problem is this solving?
+- What does success look like?
+
+**Context Completeness low?** Explore:
+
+- Related files and patterns
+- Existing conventions
+- Dependencies and affected areas
+
+**Requirements Specificity low?** Ask:
+
+- What's in scope vs out of scope?
+- What constraints exist?
+- What edge cases should we handle?
+
+**Solution Viability low?** Explore and ask:
+
+- What approaches are possible?
+- What trade-offs exist between approaches?
+- Which approach aligns with existing patterns?
+
+**Risk Assessment low?** Consider:
+
+- What could go wrong?
+- What are the dependencies?
+- What's the rollback plan?
+
+**User Alignment low?** Confirm:
+
+- Does this match your expectation?
+- Is this the approach you prefer?
+- Any concerns about this direction?
+
+### Question Guidelines
 
 **Use AskUserQuestion tool when:**
 
-- There are 2+ valid options to choose from
-- The user's preference matters
-- You're making an assumption that could be wrong
+- There are 2-4 clear options to choose from
+- User preference matters for the decision
+- You need to validate an assumption
 
 **Ask in conversation when:**
 
-- You need free-form explanation
+- You need open-ended explanation
 - The question is highly contextual
+- Multiple factors need discussion
 
-## Output
+**Limit:** 2-4 questions per round. Don't overwhelm.
 
-After thorough questioning, provide a focused implementation plan that:
+## Plan Presentation
 
-1. Lists the specific changes to make
-2. References files to modify
-3. Notes any decisions made based on user input
-4. Identifies remaining open questions (if any)
+When confidence >= 80%, present the complete plan:
 
-Remember: A great plan comes from great understanding. Take the time to ask.
+```markdown
+## Implementation Plan
+
+### Planning Progress: 84/100 (HIGH)
+
+| Factor               | Score | Note |
+| -------------------- | ----- | ---- |
+| [Full metrics table] |       |      |
+
+### Summary
+
+[1-2 sentence overview of what will be built]
+
+### Implementation Steps
+
+1. **[Step 1 title]**
+   - Files: `path/to/file.ts`
+   - Changes: [description]
+
+2. **[Step 2 title]**
+   - Files: `path/to/file.ts`
+   - Changes: [description]
+
+[Continue for all steps]
+
+### Key Decisions
+
+| Decision     | Status    | Rationale         |
+| ------------ | --------- | ----------------- |
+| [Decision 1] | Confirmed | [Why this choice] |
+| [Decision 2] | Assumed   | [Assumption made] |
+
+### Risks Identified
+
+| Risk     | Mitigation       |
+| -------- | ---------------- |
+| [Risk 1] | [How to address] |
+
+### Out of Scope
+
+- [Item 1]
+- [Item 2]
+```
+
+Then ask for approval:
+
+```json
+{
+  "questions": [
+    {
+      "question": "Ready to proceed with this implementation plan?",
+      "header": "Proceed?",
+      "options": [
+        {
+          "label": "Yes, proceed",
+          "description": "Start implementing the plan"
+        },
+        { "label": "Revise plan", "description": "I have changes to suggest" },
+        {
+          "label": "More questions",
+          "description": "I need to clarify something first"
+        }
+      ],
+      "multiSelect": false
+    }
+  ]
+}
+```
+
+## Minimum Thresholds for HIGH (80+)
+
+To reach HIGH confidence, these minimums must be met:
+
+- Intent Clarity >= 70%
+- Context Completeness >= 60%
+- Requirements Specificity >= 50%
+- Solution Viability >= 60%
+- User Alignment >= 50%
+
+If weighted score is 80+ but minimums not met, continue iterating.
+
+## Anti-Patterns to Avoid
+
+**Don't:**
+
+- Present a plan before reaching 80% confidence
+- Make assumptions when you could ask
+- Skip code exploration
+- Ask vague questions ("How should this work?")
+- Overwhelm with too many questions (max 4 per round)
+- Stop iterating because "it's taking too long"
+
+**Do:**
+
+- Show confidence metrics at every step
+- Target lowest-scoring factors
+- Ask specific, actionable questions
+- Explore codebase to validate assumptions
+- Confirm key decisions before finalizing plan
+- Keep iterating until HIGH confidence
+
+## Escape Hatches
+
+If user wants to proceed with lower confidence:
+
+```
+User: Just give me the plan, I don't need more questions
+
+You: Current confidence is 62/100. I can present the plan now, but note these gaps:
+- Solution approach not fully validated
+- Edge cases not discussed
+
+[Present plan with confidence metrics and highlighted assumptions]
+```
+
+Mark unvalidated decisions as "Assumed" in the Key Decisions table.
+
+## Arguments
+
+If the user provides context with the command:
+
+```
+/plan Add user authentication with JWT
+```
+
+Use this as your starting point, but still iterate to build confidence. Initial intent clarity might start at 30-40% instead of 20%.
+
+Remember: **A high-confidence plan prevents wasted implementation effort. Iterate until confident.**
