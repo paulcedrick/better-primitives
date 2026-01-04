@@ -12,13 +12,22 @@ You are now in debug investigation mode. Your goal is to **thoroughly investigat
 
 You must ask questions after EVERY investigation step. Do not stop until you have HIGH confidence (75+) in the root cause.
 
-## Confidence Metrics
+## The Rubber Duck Protocol
 
-Calculate and display confidence using this weighted formula:
+Before forming hypotheses, explain the suspect code aloud. This forces you to slow down and articulate your understanding. Bugs often hide in the gap between "what you think the code does" and "what it actually does."
+
+Use phrases like:
+
+- "Let me walk through what this code does..."
+- "Following the execution path..."
+- "I expected X at this point, but I see Y..."
+
+## Confidence Metrics (Summary)
+
+Calculate confidence using this weighted formula:
 
 ```
-Score = (Evidence × 0.25) + (Hypotheses × 0.20) + (Confirmations × 0.15) +
-        (CodePath × 0.12) + (Symptoms × 0.10) + (Specificity × 0.10) + (Fix × 0.08)
+Score = Evidence(25%) + Hypotheses(20%) + Confirmations(15%) + CodePath(12%) + Symptoms(10%) + Specificity(10%) + Fix(8%)
 ```
 
 | Level          | Score  | Description                          |
@@ -31,237 +40,129 @@ Score = (Evidence × 0.25) + (Hypotheses × 0.20) + (Confirmations × 0.15) +
 
 Display the full metrics table at **every investigation step**.
 
-## Investigation Process
+## Investigation Phases
 
-### Phase 1: Understand the Problem (~8/100 CRITICAL)
+### Phase 1: Symptom Collection (~8/100 CRITICAL)
 
-Start by gathering complete information. Use `AskUserQuestion` to clarify:
+Gather complete information about the problem:
 
 - What exactly is happening? What error/behavior do you see?
 - How do you reproduce this issue?
 - When did it start? What changed recently?
 - Which environment? (dev, staging, prod)
 
-At this phase: Evidence 0%, Hypotheses 0%, Confirmations ~20%, everything else 0%.
+### Phase 1.5: Reproduction (Optional but Recommended)
 
-### Phase 2: Form Hypotheses (~28/100 LOW)
+Attempt to reproduce the bug before forming hypotheses:
 
-Based on symptoms, form multiple hypotheses. Present them to the user:
+- Reproduced: Evidence Found +10%, Symptoms Explained +15%
+- Not reproduced: Evidence Found capped at 60%, note as intermittent
 
-```markdown
-### Confidence: 28/100 (LOW)
+### Phase 2: Hypothesis Formation (~28/100 LOW)
 
-| Factor                 | Score | Note                      |
-| ---------------------- | ----- | ------------------------- |
-| Evidence Found         | 20%   | 1 file identified         |
-| Hypotheses Eliminated  | 25%   | 3 formed, none eliminated |
-| User Confirmations     | 40%   | Error type confirmed      |
-| Code Path Traced       | 25%   | Entry point found         |
-| Symptoms Explained     | 25%   | Primary symptom addressed |
-| Root Cause Specificity | 20%   | Category-level            |
-| Fix Clarity            | 0%    | Too early                 |
-
-## Initial Hypotheses
+Form multiple hypotheses based on symptoms. Present them with a table:
 
 | Hypothesis | Status  | Evidence           |
 | ---------- | ------- | ------------------ |
 | [H1]       | Testing | [initial evidence] |
 | [H2]       | Testing | [none yet]         |
 | [H3]       | Testing | [none yet]         |
-```
 
 Ask user which seems most likely based on their knowledge.
 
-### Phase 3: Investigate Code (~54/100 MEDIUM)
+### Phase 3: Code Investigation (~54/100 MEDIUM)
 
-Search the codebase systematically. After EACH search or file read:
+**For each hypothesis, design an experiment before investigating:**
+
+```markdown
+### Experiment for Hypothesis: [H1]
+
+**Prediction:** If [H1] is the cause, then [action] should produce [expected result].
+**Test:** [command, code change, or observation]
+**Expected if true:** [result]
+**Expected if false:** [different result]
+```
+
+Search code systematically. After EACH search or file read:
 
 1. Present what you found in structured format
 2. Explain what it tells you about the problem
 3. Ask 2-3 confirmation questions before proceeding
 
-Use this format for findings:
-
-```markdown
-### Confidence: 54/100 (MEDIUM)
-
-| Factor                 | Score | Note                  |
-| ---------------------- | ----- | --------------------- |
-| Evidence Found         | 60%   | 3 locations connected |
-| Hypotheses Eliminated  | 50%   | 1 of 3 ruled out      |
-| User Confirmations     | 55%   | Behavior confirmed    |
-| Code Path Traced       | 50%   | Partial path traced   |
-| Symptoms Explained     | 50%   | Primary explained     |
-| Root Cause Specificity | 40%   | Component-level       |
-| Fix Clarity            | 25%   | Direction known       |
-
-**To increase confidence:** Trace remaining path, eliminate hypothesis #3.
-
-## Evidence Found
-
-- **File:** `path/to/file.ts:123`
-- **Code:** [relevant snippet]
-- **Observation:** [what this tells us]
-- **Confidence impact:** [how this affects diagnosis]
-```
-
-### Phase 4: Identify Root Cause (~82/100 HIGH)
+### Phase 4: Root Cause Identification (~82/100 HIGH)
 
 Only conclude when you have HIGH confidence (75+). Present:
 
-```markdown
-### Confidence: 82/100 (HIGH)
-
-| Factor                 | Score | Note                   |
-| ---------------------- | ----- | ---------------------- |
-| Evidence Found         | 85%   | Exact lines identified |
-| Hypotheses Eliminated  | 85%   | 2 of 3 ruled out       |
-| User Confirmations     | 75%   | Findings confirmed     |
-| Code Path Traced       | 90%   | Full path documented   |
-| Symptoms Explained     | 100%  | All symptoms covered   |
-| Root Cause Specificity | 85%   | Line-level diagnosis   |
-| Fix Clarity            | 75%   | Specific fix ready     |
-
-### Threshold Check for HIGH
-
-- [x] Evidence >= 60% (85% - Met)
-- [x] Hypotheses >= 50% (85% - Met)
-- [x] Confirmations >= 40% (75% - Met)
-- [x] Symptoms >= 70% (100% - Met)
-
-## Root Cause Identified
-
-### Problem
-
-[Clear explanation of what's causing the issue]
-
-### Mechanism
-
-[Step-by-step how the bug manifests]
-
-### Evidence
-
-[Code references that prove this diagnosis]
-
-### Recommended Fix
-
-[What should be changed to resolve it]
-```
+- Root cause explanation
+- Evidence (file paths, code snippets)
+- Recommended fix
 
 Ask user to confirm before proposing implementation.
 
-## Confidence Level Requirements
+### Phase 5: Fix Verification (~92/100 CONCLUSIVE)
 
-### HIGH (75+) Minimum Thresholds
+After implementing a fix, verify:
+
+- Original bug no longer reproduces
+- Existing tests still pass
+- No new failures introduced
+- Related functionality still works
+
+**Only mark investigation complete after verification passes.**
+
+## Tool Selection
+
+| Tool                  | Use When                               |
+| --------------------- | -------------------------------------- |
+| **Grep**              | Searching for error messages, patterns |
+| **Glob**              | Finding files by pattern               |
+| **Read**              | Understanding code context             |
+| **LSP incomingCalls** | Tracing call hierarchy                 |
+| **Bash (tests)**      | Reproducing bug, validating fix        |
+
+## Special Bug Types
+
+**Heisenbug Warning:** If bug disappears when adding console.log or in debugger, avoid intrusive debugging. Use static analysis first.
+
+**Race Conditions:** Look for shared state, missing locks, TOCTTOU patterns. Add artificial delays to exaggerate the race.
+
+## Common Bug Patterns
+
+Reference the **thorough-debugging skill** for detailed patterns including:
+
+- Null/Undefined Reference
+- Race Condition / Timing Bug
+- Off-by-One Error
+- Async/Promise Bug
+- State Management Bug (React/Vue)
+- Memory Leak
+- Type Mismatch
+- Build/Compile Error
+- Flaky Test
+
+## Minimum Thresholds for HIGH
 
 - Evidence Found >= 60%
 - Hypotheses Eliminated >= 50%
 - User Confirmations >= 40%
 - Symptoms Explained >= 70%
 
-### CONCLUSIVE (90+) Minimum Thresholds
-
-- Evidence Found >= 80%
-- Hypotheses Eliminated >= 75%
-- User Confirmations >= 60%
-- Symptoms Explained >= 90%
-- Root Cause Specificity >= 70%
-
-**Keep iterating until HIGH confidence (75+) is reached.**
-
-## Questioning Guidelines
-
-After every investigation action, use `AskUserQuestion`:
-
-```json
-{
-  "questions": [
-    {
-      "question": "Does this match what you're seeing?",
-      "header": "Confirm",
-      "options": [
-        { "label": "Yes, exactly", "description": "This matches the issue" },
-        { "label": "Partially", "description": "Some aspects match" },
-        { "label": "No", "description": "This doesn't seem related" }
-      ],
-      "multiSelect": false
-    }
-  ]
-}
-```
-
 ## Plan Mode Behavior
 
-In plan mode, you can:
+In plan mode, maximum confidence is ~85/100. You can:
 
 - Search code (Glob, Grep)
 - Read files
 - Analyze patterns
 - Form hypotheses
 
-Note what you cannot do:
+You cannot:
 
 - Run tests or scripts
 - Execute diagnostic commands
 - Check runtime state
 
-### Plan Mode Weight Adjustments
-
-| Factor             | Normal | Plan Mode | Reason                           |
-| ------------------ | ------ | --------- | -------------------------------- |
-| Evidence Found     | 25%    | **30%**   | More reliance on static analysis |
-| User Confirmations | 15%    | **18%**   | User feedback more critical      |
-| Code Path Traced   | 12%    | **10%**   | Harder without runtime           |
-| Fix Clarity        | 8%     | **2%**    | Cannot verify fix                |
-
-**Maximum confidence in plan mode: ~85/100**
-
-Display plan mode indicator: `### Confidence: 72/100 (MEDIUM) [Plan Mode]`
-
-Example: "To verify this, I would need to run the tests. Can do this once we exit plan mode."
-
-## Output Format
-
-Use structured sections throughout:
-
-```markdown
-## Current Investigation Status
-
-### Symptoms
-
-- [What user reports]
-
-### Confidence: [Score]/100 ([LEVEL])
-
-| Factor                 | Score | Note                       |
-| ---------------------- | ----- | -------------------------- |
-| Evidence Found         | X%    | [code locations found]     |
-| Hypotheses Eliminated  | X%    | [N of M ruled out]         |
-| User Confirmations     | X%    | [confirmation status]      |
-| Code Path Traced       | X%    | [path coverage]            |
-| Symptoms Explained     | X%    | [N of M explained]         |
-| Root Cause Specificity | X%    | [category/file/line level] |
-| Fix Clarity            | X%    | [fix readiness]            |
-
-**To increase confidence:** [specific actions needed]
-
-### Analysis
-
-[Your current understanding]
-
-### Hypotheses
-
-| Hypothesis | Status | Evidence |
-| ---------- | ------ | -------- |
-
-### Evidence
-
-[What you've found]
-
-### Next Steps
-
-[What you'll investigate next]
-```
+Note what execution would enable and suggest exiting plan mode when needed.
 
 ## Arguments
 
@@ -272,5 +173,21 @@ If the user provides a problem description with the command:
 ```
 
 Use this as your starting point, but still ask clarifying questions in Phase 1.
+
+## Anti-Patterns
+
+**Don't:**
+
+- Jump to conclusions without evidence
+- Propose fixes before understanding root cause
+- Skip asking confirmation questions
+- Add logging that changes timing for race conditions
+- Skip verification after implementing a fix
+
+**Do:**
+
+- Design experiments for each hypothesis
+- Use the Rubber Duck Protocol
+- Verify fixes resolve the issue
 
 Remember: **A thorough diagnosis prevents wasted effort on wrong fixes.**

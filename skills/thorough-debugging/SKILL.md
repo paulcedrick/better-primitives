@@ -24,6 +24,31 @@ Activate this skill when:
 
 After EVERY investigation step, ask 2-3 questions to confirm your findings before moving forward. Keep investigating until you reach HIGH confidence in the root cause.
 
+## The Rubber Duck Protocol
+
+Before forming hypotheses, explain the code aloud. This forces you to slow down and articulate your understanding. Bugs often hide in the gap between "what you think the code does" and "what it actually does."
+
+**Apply it:**
+
+```markdown
+Before investigating the suspect code, I'll explain what I understand it to do:
+
+1. When the user clicks "Submit", the `handleSubmit` function is called
+2. This function calls `validateForm()` which returns true/false
+3. If valid, it calls `submitToAPI()` which returns a Promise
+4. On success, it updates state with `setResult(data)`
+5. On error, it... [pause] - I don't see error handling here.
+
+**Wait - the code doesn't handle the error case from submitToAPI.**
+That could explain why the form "freezes" on network errors.
+```
+
+This "explain it to discover" pattern is explicitly encouraged. Use phrases like:
+
+- "Let me walk through what this code does..."
+- "Following the execution path..."
+- "I expected X at this point, but I see Y..."
+
 ## Confidence Metrics System
 
 Confidence is calculated using a **weighted multi-factor formula** that produces a numeric score (0-100). This provides transparent, measurable progress through the investigation.
@@ -187,6 +212,94 @@ When approaching HIGH confidence, include threshold verification:
 **Status:** All HIGH thresholds met. Ready to present diagnosis.
 ```
 
+## Debugging Tool Selection
+
+Choose the right tool for each investigation step:
+
+### Static Analysis (Plan Mode Compatible)
+
+| Tool                   | Use When                                           | Example                                |
+| ---------------------- | -------------------------------------------------- | -------------------------------------- |
+| **Grep**               | Searching for string patterns, error messages      | `Grep pattern="401.*auth" path="src/"` |
+| **Glob**               | Finding files by pattern                           | `Glob pattern="**/*auth*.ts"`          |
+| **Read**               | Understanding code context, reading full functions | `Read file_path="src/auth/login.ts"`   |
+| **LSP goToDefinition** | Finding where something is defined                 | Navigate to function source            |
+| **LSP findReferences** | Finding all usages                                 | See everywhere a function is called    |
+| **LSP incomingCalls**  | Call hierarchy - who calls this                    | Trace callers of suspect function      |
+
+### Runtime Analysis (Execution Mode Only)
+
+| Tool                      | Use When                        | Example                              |
+| ------------------------- | ------------------------------- | ------------------------------------ |
+| **Bash (tests)**          | Reproducing bug, validating fix | `npm test -- --grep "auth"`          |
+| **Bash (diagnostic)**     | Checking runtime state          | `curl -v http://localhost:3000/api`  |
+| **Console.log insertion** | Tracing execution flow          | Add temporary logs, run, read output |
+| **Debugger/Breakpoints**  | Complex state inspection        | (Note: Cannot do interactively)      |
+
+### Tool Selection Decision Tree
+
+```
+Is the bug reproducible via tests?
+├── Yes → Run tests first to confirm (Bash)
+└── No → Analyze code statically first (Grep/Read/LSP)
+         │
+         └── Found suspect code?
+             ├── Yes → Trace call hierarchy (LSP incomingCalls)
+             └── No → Broaden search (Grep with related terms)
+```
+
+## Experiment Design for Hypothesis Testing
+
+For each hypothesis, design a specific experiment before investigating:
+
+### Experiment Template
+
+```markdown
+### Experiment for Hypothesis: [H1]
+
+**Prediction:** If [H1] is the cause, then [specific action] should produce [expected result].
+
+**Test:**
+
+- Action: [command, code change, or observation to perform]
+- Expected if H1 is true: [result]
+- Expected if H1 is false: [different result]
+
+**Result:** [To be filled after execution]
+**Conclusion:** [Supports/Refutes/Inconclusive for H1]
+```
+
+### Example Experiments
+
+**Hypothesis: Token refresh has a race condition**
+
+- Action: Add a 500ms delay before token refresh
+- Expected if true: Bug disappears or becomes less frequent
+- Expected if false: Bug persists unchanged
+
+**Hypothesis: Null reference from uninitialized prop**
+
+- Action: Add console.log for prop value at component mount
+- Expected if true: Log shows undefined/null
+- Expected if false: Log shows valid value
+
+**Hypothesis: Off-by-one error in loop**
+
+- Action: Test with array of length 0, 1, and 2
+- Expected if true: Fails at boundary (length 0 or max index)
+- Expected if false: Works for all array sizes
+
+### Experiment Types by Tool
+
+| Tool        | Experiment Type    | Example                                      |
+| ----------- | ------------------ | -------------------------------------------- |
+| Bash        | Runtime validation | Run with debug flags, specific inputs        |
+| Read/Grep   | Static analysis    | Check if code path exists                    |
+| LSP         | Call hierarchy     | Trace all callers of suspect function        |
+| Console.log | Value inspection   | Log state at key points                      |
+| Breakpoint  | State inspection   | Pause and inspect variables                  |
+| Bisection   | Isolation          | Disable half the code, check if bug persists |
+
 ## Investigation Phases
 
 ### Phase 1: Symptom Collection
@@ -225,6 +338,43 @@ You: I'll help debug this. First, let me understand what you're seeing.
 - When did it start / what changed?
 - Does it happen in all environments or just one?
 
+### Phase 1.5: Reproduction (Optional but Recommended)
+
+Before forming hypotheses, attempt to reproduce the bug:
+
+**Questions to ask:**
+
+- Can you reproduce this consistently?
+- What are the exact steps to trigger the bug?
+- Does it occur in specific environments only?
+
+**If reproducible:**
+
+```markdown
+I've confirmed the bug reproduces with these steps:
+
+1. [step 1]
+2. [step 2]
+3. Expected: [X], Actual: [Y]
+
+This increases confidence that we're investigating the right issue.
+```
+
+**If intermittent:**
+
+```markdown
+This appears to be an intermittent bug. I'll note the reproduction conditions:
+
+- Frequency: [X% of the time]
+- Known triggers: [conditions]
+- Possible Heisenbug: [yes/no - see Special Bug Types section]
+```
+
+**Impact on Confidence:**
+
+- Reproduced: Evidence Found +10%, Symptoms Explained +15%
+- Not reproduced: Evidence Found capped at 60%, note in metrics
+
 ### Phase 2: Hypothesis Formation
 
 Based on symptoms, form initial hypotheses and validate with user.
@@ -261,7 +411,7 @@ You: Based on what you've described, here are my initial hypotheses:
 
 ### Phase 3: Code Investigation (Iterative)
 
-Investigate the codebase, presenting findings after each search.
+Investigate the codebase, presenting findings after each search. **For each hypothesis, design an experiment before investigating.**
 
 ```
 [After searching code]
@@ -288,6 +438,11 @@ You: I found the API call implementation.
 | Authentication token expired | Leading | Token refresh missing on 401 |
 | Network connectivity issue | Ruled out | Other calls succeed |
 | API endpoint changed | Testing | No evidence of endpoint change |
+
+## Experiment for Leading Hypothesis
+**Prediction:** If token refresh is the cause, then adding a manual token refresh before the API call should fix the issue.
+**Test:** Temporarily add `await refreshToken()` before the failing API call.
+**Expected if true:** API call succeeds after manual refresh.
 
 ## Evidence Found
 - File: `src/api/client.ts:45`
@@ -355,6 +510,343 @@ Add a refresh lock to prevent concurrent token refresh attempts.
 - Would you like me to implement this fix?
 ```
 
+### Phase 5: Fix Verification
+
+After implementing a fix, verify it resolves the issue:
+
+```markdown
+## Fix Verification
+
+### Confidence: 92/100 (CONCLUSIVE)
+
+| Factor                 | Score | Note                        |
+| ---------------------- | ----- | --------------------------- |
+| Evidence Found         | 95%   | Root cause + fix identified |
+| Hypotheses Eliminated  | 100%  | Single hypothesis confirmed |
+| User Confirmations     | 85%   | Diagnosis confirmed         |
+| Code Path Traced       | 100%  | Full path documented        |
+| Symptoms Explained     | 100%  | All symptoms resolved       |
+| Root Cause Specificity | 95%   | Line-level with fix         |
+| Fix Clarity            | 100%  | Fix implemented & verified  |
+
+### Verification Checklist
+
+- [ ] Original bug no longer reproduces
+- [ ] Existing tests still pass
+- [ ] No new test failures introduced
+- [ ] Related functionality still works
+- [ ] Edge cases handled (if applicable)
+
+### Verification Results
+
+**Reproduction test:** [pass/fail]
+**Test suite:** [X tests pass, Y fail]
+**Regression check:** [any new issues?]
+**Side effects:** [none observed / potential issue with X]
+```
+
+**Only mark the investigation as complete after verification passes.**
+
+## Special Bug Types: Heisenbugs and Race Conditions
+
+Some bugs require special debugging tactics because they're sensitive to observation.
+
+### Heisenbug Detection
+
+A Heisenbug is a bug that disappears or changes when you try to study it:
+
+- Bug disappears when adding console.log
+- Bug doesn't reproduce in debugger
+- Bug is intermittent with no pattern
+- Bug only appears under load
+
+**If Heisenbug detected:**
+
+```markdown
+**Heisenbug Warning**
+
+This bug exhibits Heisenbug characteristics:
+
+- [Specific behavior observed]
+
+**Special investigation tactics required:**
+
+- Avoid intrusive debugging (no console.log that changes timing)
+- Use non-blocking observation (logging frameworks with buffering)
+- Consider time-travel debugging if available
+- Analyze code statically before runtime verification
+```
+
+### Race Condition Investigation
+
+Common indicators:
+
+- Intermittent failures
+- Works locally, fails in CI
+- Fails under load but not single requests
+- "Timing-dependent" behavior
+
+**Investigation tactics:**
+
+1. Identify shared state access points
+2. Look for missing locks/synchronization
+3. Check for time-of-check-to-time-of-use (TOCTTOU) patterns
+4. Draw sequence diagram of concurrent operations
+5. Experiment: Add artificial delays to exaggerate the race
+
+**Common patterns:**
+
+- `if (exists) { use(thing) }` - thing can change between check and use
+- Multiple requests accessing shared cache without locks
+- Promise.all with shared state mutations
+- Event handlers modifying same state
+
+## Common Bug Patterns Reference
+
+Use this reference to guide investigation based on bug symptoms.
+
+### Null/Undefined Reference
+
+**Symptoms:** "Cannot read property X of undefined", "undefined is not a function"
+
+**Common Causes:**
+
+- Uninitialized variable/prop
+- Async data not loaded yet
+- Optional chaining needed
+- Incorrect import/export
+
+**Investigation Tactics:**
+
+1. Find the exact line from stack trace
+2. Trace data flow backward: where should this value come from?
+3. Check initialization order (component mount vs data fetch)
+4. Look for missing optional chaining (`?.`)
+
+**Experiment:** Add console.log for the undefined value at its source.
+
+**Example:**
+
+```
+User: "I'm getting 'Cannot read property 'name' of undefined' but TypeScript didn't catch it."
+
+Investigation:
+1. Find the exact line and variable
+2. Check the TypeScript type for that variable
+3. Look for `any` type escaping the type system
+4. Check API response parsing - is there `as MyType` casting?
+
+Found: API response typed with `as User[]` without validation.
+Root cause: Backend can return empty array or null, frontend assumes array of objects.
+```
+
+---
+
+### Race Condition / Timing Bug
+
+**Symptoms:** Intermittent failures, works in debug mode, timing-dependent
+
+**Common Causes:**
+
+- Shared state without synchronization
+- Missing await/async handling
+- Event ordering assumptions
+- Cache invalidation timing
+
+**Investigation Tactics:**
+
+1. Identify all shared state access points
+2. Draw sequence diagram of concurrent operations
+3. Look for TOCTTOU patterns
+4. Check for missing locks/semaphores
+
+**Experiment:** Add artificial delays to exaggerate the race.
+
+---
+
+### Off-by-One Error
+
+**Symptoms:** Array index out of bounds, wrong loop count, fencepost errors
+
+**Common Causes:**
+
+- `<` vs `<=` confusion
+- Zero-based vs one-based indexing
+- `length` vs `length - 1`
+- Inclusive vs exclusive ranges
+
+**Investigation Tactics:**
+
+1. Test with arrays of size 0, 1, 2
+2. Add boundary assertions
+3. Check loop bounds explicitly
+4. Trace exact iteration values
+
+**Experiment:** Log loop counter and array length at each iteration.
+
+---
+
+### Async/Promise Bug
+
+**Symptoms:** Unresolved promises, missing data, unhandled rejections
+
+**Common Causes:**
+
+- Missing `await` keyword
+- Promise not returned
+- Error not caught
+- Race between promises
+
+**Investigation Tactics:**
+
+1. Check async stack traces (Chrome DevTools)
+2. Look for floating promises (no await, no .then)
+3. Check error handling (.catch, try/catch)
+4. Verify promise resolution order
+
+**Experiment:** Add `.catch(console.error)` to suspected promise.
+
+---
+
+### State Management Bug (React/Vue/etc.)
+
+**Symptoms:** Stale state, unexpected re-renders, state not updating
+
+**Common Causes:**
+
+- Direct state mutation (instead of setter)
+- Stale closure over state
+- Missing dependency in useEffect
+- Incorrect comparison (reference vs value)
+
+**Investigation Tactics:**
+
+1. Log state changes with timestamps
+2. Use React DevTools to inspect state
+3. Check useEffect dependencies
+4. Look for object/array mutation
+
+**Experiment:** Replace mutation with immutable update, verify behavior changes.
+
+**Example:**
+
+```
+User: Button click doesn't update the displayed count.
+
+Investigation:
+1. Check if setState is being called (add console.log)
+2. Check if component re-renders (React DevTools)
+3. Check for stale closure in event handler
+4. Check if state is mutated vs set via setter
+
+Found: Event handler has stale closure over `count` variable.
+Evidence: `useCallback` dependency array missing `count`.
+Fix: Add `count` to useCallback dependencies, or use functional updater `setCount(c => c + 1)`.
+```
+
+---
+
+### Memory Leak
+
+**Symptoms:** Growing memory over time, performance degradation, eventual crash
+
+**Common Causes:**
+
+- Event listeners not removed
+- Interval/timeout not cleared
+- Closure capturing large objects
+- Caching without eviction
+
+**Investigation Tactics:**
+
+1. Take heap snapshots over time
+2. Look for growing retained sizes
+3. Check cleanup in useEffect returns
+4. Search for addEventListener without removeEventListener
+
+**Experiment:** Run garbage collection, compare heap before/after.
+
+---
+
+### Type Mismatch (JavaScript/TypeScript)
+
+**Symptoms:** Unexpected behavior, "NaN", string concatenation instead of addition
+
+**Common Causes:**
+
+- `any` type escaping validation
+- Runtime data not matching expected type
+- Incorrect API response shape
+- Missing type guards
+
+**Investigation Tactics:**
+
+1. Add `typeof` / `instanceof` checks
+2. Log actual value and type at error point
+3. Trace value from source (API, user input)
+4. Check TypeScript strict mode
+
+**Experiment:** Add runtime type guard, throw if type unexpected.
+
+---
+
+### Build/Compile Error
+
+**Symptoms:** Build fails, type errors, import errors
+
+**Common Causes:**
+
+- Missing dependency
+- Version mismatch
+- Circular import
+- Incorrect tsconfig/babel config
+
+**Investigation Tactics:**
+
+1. Read error message carefully (line, file, reason)
+2. Check package.json versions
+3. Try clean build (rm -rf node_modules, fresh install)
+4. Check import graph for cycles
+
+**Experiment:** Isolate the failing import/file, build incrementally.
+
+**Example:**
+
+```
+User: Build passes locally, fails in CI with type errors.
+
+Investigation:
+1. Compare Node/npm versions (CI vs local)
+2. Check if node_modules is cached incorrectly
+3. Compare tsconfig strict settings
+4. Check for OS-specific path issues (case sensitivity)
+
+Found: CI runs with `strict: true`, local has `strict: false`.
+Fix: Enable strict mode locally, fix reported type issues.
+```
+
+---
+
+### Flaky Test
+
+**Symptoms:** Test passes sometimes, fails randomly, order-dependent
+
+**Common Causes:**
+
+- Shared state between tests
+- Timing assumptions (setTimeout, animation frames)
+- External dependency (network, file system)
+- Random data without seeding
+
+**Investigation Tactics:**
+
+1. Run test in isolation vs with other tests
+2. Run test multiple times in a row
+3. Check for shared state (global variables, singletons)
+4. Add explicit waits for async operations
+
+**Experiment:** Run suspect test 100x in isolation, note failure rate.
+
 ## Structured Output Format
 
 Use this format throughout investigation:
@@ -393,6 +885,11 @@ Use this format throughout investigation:
 | [H2]       | Ruled out | [why eliminated]                    |
 | [H3]       | Leading   | [key evidence]                      |
 
+### Experiment for Leading Hypothesis
+
+**Prediction:** If [H] is true, then [action] should produce [result].
+**Test:** [specific command or action]
+
 ### Evidence Found
 
 - File: `path/to/file.ts:123`
@@ -430,9 +927,11 @@ Refer to the **Confidence Metrics System** section above for the complete scorin
 **Always use AskUserQuestion after:**
 
 - Initial problem description (Phase 1)
+- Reproduction attempt (Phase 1.5)
 - Forming hypotheses (Phase 2)
 - Each code search/read (Phase 3)
 - Proposing root cause (Phase 4)
+- Verifying fix (Phase 5)
 
 **Good debugging questions:**
 
@@ -569,14 +1068,20 @@ Results confirm the issue - 3 auth-related tests failing:
 - Skip asking confirmation questions
 - Assume you know what the user means
 - Stop investigating at Medium confidence
+- Add logging that changes timing for race conditions (Heisenbug risk)
+- Ignore intermittent behavior as "random"
+- Skip the verification phase after implementing a fix
 
 **Do:**
 
 - Show your reasoning at each step
 - Ask questions after every investigation action
 - Present multiple hypotheses initially
+- Design experiments for each hypothesis
 - Let evidence guide your investigation
 - Confirm diagnosis before proposing fixes
+- Verify fixes resolve the issue before closing
+- Use the Rubber Duck Protocol to explain code before hypothesizing
 
 ## Iteration Loop
 
@@ -584,12 +1089,14 @@ The debugging process is iterative:
 
 ```
 1. Gather symptom → Ask questions
-2. Form hypothesis → Ask questions
-3. Search code → Ask questions
-4. Analyze finding → Ask questions
-5. Confidence still Low/Medium? → Go to step 3
-6. Confidence High → Present root cause → Ask to confirm
-7. User confirms → Propose fix
+2. Reproduce bug (optional) → Ask questions
+3. Form hypothesis → Design experiment → Ask questions
+4. Search code / Run experiment → Ask questions
+5. Analyze finding → Ask questions
+6. Confidence still Low/Medium? → Go to step 4
+7. Confidence High → Present root cause → Ask to confirm
+8. User confirms → Propose fix
+9. Implement fix → Verify → Ask to confirm resolution
 ```
 
 Remember: **Thoroughness comes from iteration, and iteration comes from questions.**
