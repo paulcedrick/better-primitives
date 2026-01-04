@@ -1,9 +1,10 @@
 {
-  "name": "better-plan-mode",
-  "description": "Enhanced planning with thorough, question-driven understanding. Makes Claude proactively ask in-depth questions about requirements, technical approach, and scope before making assumptions.",
+  "name": "better-primitives",
+  "description": "Better primitives for Claude Code - enhanced planning and debugging with thorough, question-driven approaches.",
   "version": "1.0.0",
   "author": {
-    "name": "pcartigo"
+    "name": "paulcedrick",
+    "url": "https://github.com/paulcedrick"
   },
   "license": "MIT"
 }

@@ -1,0 +1,19 @@
+{
+  "name": "paulcedrick",
+  "owner": {
+    "name": "paulcedrick",
+    "url": "https://github.com/paulcedrick"
+  },
+  "description": "Better primitives for Claude Code",
+  "plugins": [
+    {
+      "name": "better-primitives",
+      "source": "./",
+      "description": "Better primitives for Claude Code - enhanced planning and debugging with thorough, question-driven approaches.",
+      "version": "1.0.0",
+      "author": {
+        "name": "paulcedrick"
+      }
+    }
+  ]
+}
