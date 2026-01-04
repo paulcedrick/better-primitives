@@ -14,8 +14,16 @@ echo ""
 echo "Uninstalling $PLUGIN_NAME..."
 claude plugin uninstall "$PLUGIN_NAME" 2>/dev/null || echo "  (not currently installed)"
 
-echo "Installing $PLUGIN_NAME from $SCRIPT_DIR..."
-claude plugin install "$SCRIPT_DIR"
+MARKETPLACE_NAME="paulcedrick"
+
+echo "Adding local marketplace..."
+claude plugin marketplace add "$SCRIPT_DIR" 2>/dev/null || echo "  (marketplace already added)"
+
+echo "Updating marketplace..."
+claude plugin marketplace update "$MARKETPLACE_NAME"
+
+echo "Installing $PLUGIN_NAME..."
+claude plugin install "$PLUGIN_NAME"
 
 echo ""
 echo "=== Done! ==="
