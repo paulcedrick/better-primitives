@@ -1,13 +1,14 @@
 # Better Primitives
 
-A Claude Code plugin providing enhanced planning and debugging with thorough, question-driven approaches.
+A Claude Code plugin providing enhanced planning, debugging, and analysis with thorough, question-driven approaches.
 
 ## Commands
 
-| Command                    | Description                                             |
-| -------------------------- | ------------------------------------------------------- |
-| `/better-primitives:plan`  | Enhanced planning with thorough questioning             |
-| `/better-primitives:debug` | Thorough debugging with confidence-scored investigation |
+| Command                      | Description                                             |
+| ---------------------------- | ------------------------------------------------------- |
+| `/better-primitives:plan`    | Enhanced planning with thorough questioning             |
+| `/better-primitives:debug`   | Thorough debugging with confidence-scored investigation |
+| `/better-primitives:analyze` | Thorough analysis for improvements with iterative questioning |
 
 ## Installation
 
@@ -65,6 +66,25 @@ Claude will:
 
 The `thorough-debugging` skill also activates automatically when Claude detects bug reports, error messages, or unexpected behavior.
 
+### Analyze Command
+
+Use `/better-primitives:analyze` to start thorough analysis for improvements:
+
+```
+/better-primitives:analyze performance of the API handlers
+```
+
+Claude will:
+
+1. Gather understanding of what you want to improve with clarifying questions
+2. Explore the target area and identify improvement opportunities
+3. Ask about priorities, trade-offs, and scope boundaries
+4. Validate findings with a second exploration pass
+5. Present categorized findings with impact levels
+6. Ask if you want an implementation plan
+
+The `thorough-analysis` skill also activates automatically when Claude detects requests to improve, optimize, refactor, or enhance code.
+
 ## Structure
 
 ```
@@ -73,11 +93,14 @@ better-primitives/
 │   └── plugin.json
 ├── commands/
 │   ├── plan.md
-│   └── debug.md
+│   ├── debug.md
+│   └── analyze.md
 ├── skills/
 │   ├── thorough-planning/
 │   │   └── SKILL.md
-│   └── thorough-debugging/
+│   ├── thorough-debugging/
+│   │   └── SKILL.md
+│   └── thorough-analysis/
 │       └── SKILL.md
 └── README.md
 ```
