@@ -1,6 +1,6 @@
 # Better Primitives
 
-A Claude Code plugin providing enhanced planning, debugging, and analysis with thorough, question-driven approaches.
+A Claude Code plugin providing enhanced planning, debugging, analysis, and software architecture design with thorough, question-driven approaches.
 
 ## Commands
 
@@ -9,8 +9,15 @@ A Claude Code plugin providing enhanced planning, debugging, and analysis with t
 | `/better-primitives:plan`    | Enhanced planning with thorough questioning                                                                                  |
 | `/better-primitives:debug`   | Thorough debugging with confidence-scored investigation                                                                      |
 | `/better-primitives:analyze` | Thorough analysis for improvements with confidence-scored investigation (ISO 25010 categories, Impact/Effort prioritization) |
+| `/better-primitives:design`  | Thorough software architecture design with ATAM-inspired risk/trade-off analysis and C4-style diagrams                       |
 
 ## Installation
+
+### Quick Install (One-liner)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/paulcedrick/better-primitives/main/install.sh | bash
+```
 
 ### From GitHub
 
@@ -93,6 +100,38 @@ Features include:
 - **ISO 25010 Categories** - organize findings by standard quality characteristics
 - **Common Improvement Patterns** - reference guide for code smells
 
+### Design Command
+
+Use `/better-primitives:design` to start thorough architecture design:
+
+```
+/better-primitives:design the authentication system
+```
+
+Claude will:
+
+1. Gather context about the system's purpose and stakeholders
+2. Explore the codebase using the Walkthrough Protocol
+3. Identify components, flows, and boundaries
+4. Analyze architectural risks (ATAM-style)
+5. Document trade-offs with rationale (ADR-style)
+6. Present architecture with diagrams when confidence reaches HIGH (80+)
+
+The `thorough-design` skill supports three modes:
+
+- **Architect New** - Design a new feature/system before implementation
+- **Understand Existing** - Reverse-engineer and document current architecture
+- **Plan Evolution** - Design how to extend/modify existing architecture
+
+Features include:
+
+- **7-factor confidence metrics** - Context, Components, Flows, Boundaries, Risks, Trade-offs, Alignment
+- **Walkthrough Protocol** - understand systems before designing
+- **ATAM-inspired analysis** - identify architectural risks and non-risks
+- **ADR-style trade-offs** - document decisions with rationale
+- **Dual diagram support** - both Mermaid and ASCII art diagrams
+- **Integration with /plan** - design output can feed into implementation planning
+
 ## Structure
 
 ```
@@ -102,13 +141,16 @@ better-primitives/
 ├── commands/
 │   ├── plan.md
 │   ├── debug.md
-│   └── analyze.md
+│   ├── analyze.md
+│   └── design.md
 ├── skills/
 │   ├── thorough-planning/
 │   │   └── SKILL.md
 │   ├── thorough-debugging/
 │   │   └── SKILL.md
-│   └── thorough-analysis/
+│   ├── thorough-analysis/
+│   │   └── SKILL.md
+│   └── thorough-design/
 │       └── SKILL.md
 └── README.md
 ```
