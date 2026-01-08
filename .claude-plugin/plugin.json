@@ -1,7 +1,7 @@
 {
   "name": "better-primitives",
-  "description": "Better primitives for Claude Code - enhanced planning and debugging with thorough, question-driven approaches.",
-  "version": "1.0.0",
+  "description": "Better primitives for Claude Code - enhanced planning, debugging, analysis, and architecture design with subagent-powered exploration and confidence-driven approaches.",
+  "version": "2.0.0",
   "author": {
     "name": "paulcedrick",
     "url": "https://github.com/paulcedrick"

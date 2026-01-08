@@ -1,178 +1,188 @@
 ---
-description: Start thorough debugging investigation. Uses iterative questioning to deeply understand and diagnose technical problems.
+description: Start thorough debugging with subagent-powered investigation. Uses iterative confidence metrics and parallel hypothesis testing to diagnose issues.
 ---
 
 # Debug Mode
 
-You are now in debug investigation mode. Your goal is to **thoroughly investigate and diagnose** the problem through iterative analysis and frequent questioning.
+You are now in debug investigation mode. Your goal is to reach **HIGH confidence (75+)** in the root cause before presenting a diagnosis.
 
 ## Core Principle
 
-**Investigate deeply. Confirm constantly. Never assume.**
+**Investigate iteratively. Delegate searches. Test hypotheses. Confirm constantly.**
 
-You must ask questions after EVERY investigation step. Do not stop until you have HIGH confidence (75+) in the root cause.
+## Confidence Score
 
-## The Rubber Duck Protocol
-
-Before forming hypotheses, explain the suspect code aloud. This forces you to slow down and articulate your understanding. Bugs often hide in the gap between "what you think the code does" and "what it actually does."
-
-Use phrases like:
-
-- "Let me walk through what this code does..."
-- "Following the execution path..."
-- "I expected X at this point, but I see Y..."
-
-## Confidence Metrics (Summary)
-
-Calculate confidence using this weighted formula:
+Calculate confidence using this formula:
 
 ```
 Score = Evidence(25%) + Hypotheses(20%) + Confirmations(15%) + CodePath(12%) + Symptoms(10%) + Specificity(10%) + Fix(8%)
 ```
 
-| Level          | Score  | Description                          |
-| -------------- | ------ | ------------------------------------ |
-| **CRITICAL**   | 0-24   | Initial phase, gathering information |
-| **LOW**        | 25-49  | Partial evidence, hypotheses forming |
-| **MEDIUM**     | 50-74  | Leading hypothesis with evidence     |
-| **HIGH**       | 75-89  | Strong diagnosis, ready to conclude  |
-| **CONCLUSIVE** | 90-100 | Definitive diagnosis with full proof |
+| Level      | Score | Description                        |
+| ---------- | ----- | ---------------------------------- |
+| CRITICAL   | 0-24  | Initial phase, gathering info      |
+| LOW        | 25-49 | Partial evidence, forming theories |
+| MEDIUM     | 50-74 | Leading hypothesis emerging        |
+| HIGH       | 75-89 | Strong diagnosis, ready to present |
+| CONCLUSIVE | 90+   | Definitive with full proof         |
 
-Display the full metrics table at **every investigation step**.
+**Target:** Reach HIGH (75+) before presenting diagnosis. Display score after each step.
 
-## Investigation Phases
+## Debug Process
 
-### Phase 1: Symptom Collection (~8/100 CRITICAL)
+### Phase 1: Symptom Collection (~8/100)
 
-Gather complete information about the problem:
+Gather information using AskUserQuestion:
 
-- What exactly is happening? What error/behavior do you see?
-- How do you reproduce this issue?
-- When did it start? What changed recently?
-- Which environment? (dev, staging, prod)
+- What error/behavior are you seeing?
+- How do you reproduce this?
+- When did it start? What changed?
+- Which environment? (dev/staging/prod)
 
-### Phase 1.5: Reproduction (Optional but Recommended)
+### Phase 2: Hypothesis Formation (~28/100)
 
-Attempt to reproduce the bug before forming hypotheses:
+Based on symptoms, form hypotheses and present:
 
-- Reproduced: Evidence Found +10%, Symptoms Explained +15%
-- Not reproduced: Evidence Found capped at 60%, note as intermittent
-
-### Phase 2: Hypothesis Formation (~28/100 LOW)
-
-Form multiple hypotheses based on symptoms. Present them with a table:
+```markdown
+### Hypotheses
 
 | Hypothesis | Status  | Evidence           |
 | ---------- | ------- | ------------------ |
 | [H1]       | Testing | [initial evidence] |
 | [H2]       | Testing | [none yet]         |
 | [H3]       | Testing | [none yet]         |
-
-Ask user which seems most likely based on their knowledge.
-
-### Phase 3: Code Investigation (~54/100 MEDIUM)
-
-**For each hypothesis, design an experiment before investigating:**
-
-```markdown
-### Experiment for Hypothesis: [H1]
-
-**Prediction:** If [H1] is the cause, then [action] should produce [expected result].
-**Test:** [command, code change, or observation]
-**Expected if true:** [result]
-**Expected if false:** [different result]
 ```
 
-Search code systematically. After EACH search or file read:
+Ask which seems most likely based on user's knowledge.
 
-1. Present what you found in structured format
-2. Explain what it tells you about the problem
-3. Ask 2-3 confirmation questions before proceeding
+### Phase 3: Parallel Investigation (~55/100)
 
-### Phase 4: Root Cause Identification (~82/100 HIGH)
+**Delegate code searches to subagents:**
 
-Only conclude when you have HIGH confidence (75+). Present:
+Use the Task tool to launch **parallel** exploration:
 
-- Root cause explanation
-- Evidence (file paths, code snippets)
-- Recommended fix
+```
+# Launch these in parallel (single message, multiple Task calls):
 
-Ask user to confirm before proposing implementation.
+Task 1 (Explore, model=haiku):
+"Search for files containing [error message or pattern]"
 
-### Phase 5: Fix Verification (~92/100 CONCLUSIVE)
+Task 2 (Explore, model=sonnet):
+"Analyze [suspect file] for [hypothesis condition]"
 
-After implementing a fix, verify:
+Task 3 (Explore, model=sonnet):
+"Trace call hierarchy for [function name]"
+```
+
+**After each subagent returns:**
+
+1. Present findings in structured format
+2. Update hypothesis status (Leading/Ruled out)
+3. Ask 2-3 confirmation questions
+
+### Phase 4: Root Cause Identification (~82/100)
+
+When confidence >= 75%, present:
+
+```markdown
+## Diagnosis
+
+### Confidence: [score]/100 (HIGH)
+
+### Root Cause
+
+[Explanation of what's causing the issue]
+
+### Evidence
+
+- File: `path/to/file.ts:line`
+- Code: [relevant snippet]
+- Observation: [what this tells us]
+
+### Recommended Fix
+
+[Specific fix with code changes]
+```
+
+Ask user to confirm before implementing.
+
+### Phase 5: Fix Verification (~92/100)
+
+After implementing:
 
 - Original bug no longer reproduces
 - Existing tests still pass
 - No new failures introduced
-- Related functionality still works
 
-**Only mark investigation complete after verification passes.**
+## Hypothesis Testing with Subagents
 
-## Tool Selection
+For each hypothesis, design an experiment:
 
-| Tool                  | Use When                               |
-| --------------------- | -------------------------------------- |
-| **Grep**              | Searching for error messages, patterns |
-| **Glob**              | Finding files by pattern               |
-| **Read**              | Understanding code context             |
-| **LSP incomingCalls** | Tracing call hierarchy                 |
-| **Bash (tests)**      | Reproducing bug, validating fix        |
+```markdown
+### Experiment: [Hypothesis]
+
+**Prediction:** If [H] is true, then [action] produces [result]
+**Test:** [what to search/check]
+**Expected if true:** [result]
+**Expected if false:** [different result]
+```
+
+Delegate the test to a subagent:
+
+```
+Task (Explore, model=sonnet):
+"Test hypothesis: [H]. Check if [condition] exists in [location].
+Return: evidence supporting or refuting the hypothesis."
+```
+
+## Subagent Usage Summary
+
+| Phase | Task                 | Subagent        | Model  |
+| ----- | -------------------- | --------------- | ------ |
+| 3     | Error pattern search | Explore         | haiku  |
+| 3     | Code analysis        | Explore         | sonnet |
+| 3     | Call hierarchy trace | Explore         | sonnet |
+| 3     | Hypothesis testing   | general-purpose | sonnet |
+| 1,4   | User interaction     | (main)          | opus   |
 
 ## Special Bug Types
 
-**Heisenbug Warning:** If bug disappears when adding console.log or in debugger, avoid intrusive debugging. Use static analysis first.
+### Heisenbug (disappears when observed)
 
-**Race Conditions:** Look for shared state, missing locks, TOCTTOU patterns. Add artificial delays to exaggerate the race.
+- Avoid console.log that changes timing
+- Use static analysis via subagents first
+- Look for race conditions
 
-## Common Bug Patterns
+### Race Condition
 
-Reference the **thorough-debugging skill** for detailed patterns including:
+- Look for shared state access
+- Check for missing locks/synchronization
+- Launch subagent to find TOCTTOU patterns
 
-- Null/Undefined Reference
-- Race Condition / Timing Bug
-- Off-by-One Error
-- Async/Promise Bug
-- State Management Bug (React/Vue)
-- Memory Leak
-- Type Mismatch
-- Build/Compile Error
-- Flaky Test
+### Intermittent Failure
+
+- Note reproduction rate
+- Check for timing dependencies
+- Search for flaky test patterns
+
+## Factor Scoring Guide
+
+| Factor        | Low                      | Medium                  | High                    |
+| ------------- | ------------------------ | ----------------------- | ----------------------- |
+| Evidence      | No code found            | Relevant locations      | Exact lines identified  |
+| Hypotheses    | Multiple, none ruled out | Some eliminated         | Single leading          |
+| Confirmations | No questions asked       | User confirmed symptoms | Diagnosis confirmed     |
+| CodePath      | Entry point only         | Partial path            | Full path traced        |
+| Symptoms      | None explained           | Primary explained       | All explained           |
+| Specificity   | Category-level           | File-level              | Line-level              |
+| Fix           | No fix known             | Approach clear          | Exact changes specified |
 
 ## Minimum Thresholds for HIGH
 
-- Evidence Found >= 60%
+- Evidence >= 60%
 - Hypotheses Eliminated >= 50%
-- User Confirmations >= 40%
+- Confirmations >= 40%
 - Symptoms Explained >= 70%
-
-## Plan Mode Behavior
-
-In plan mode, maximum confidence is ~85/100. You can:
-
-- Search code (Glob, Grep)
-- Read files
-- Analyze patterns
-- Form hypotheses
-
-You cannot:
-
-- Run tests or scripts
-- Execute diagnostic commands
-- Check runtime state
-
-Note what execution would enable and suggest exiting plan mode when needed.
-
-## Arguments
-
-If the user provides a problem description with the command:
-
-```
-/debug The API returns 500 errors intermittently
-```
-
-Use this as your starting point, but still ask clarifying questions in Phase 1.
 
 ## Anti-Patterns
 
@@ -181,13 +191,23 @@ Use this as your starting point, but still ask clarifying questions in Phase 1.
 - Jump to conclusions without evidence
 - Propose fixes before understanding root cause
 - Skip asking confirmation questions
-- Add logging that changes timing for race conditions
-- Skip verification after implementing a fix
+- Add logging that changes timing (for race conditions)
 
 **Do:**
 
-- Design experiments for each hypothesis
-- Use the Rubber Duck Protocol
+- Delegate searches to subagents
+- Run hypothesis tests in parallel
+- Explain code aloud (Rubber Duck Protocol)
 - Verify fixes resolve the issue
 
-Remember: **A thorough diagnosis prevents wasted effort on wrong fixes.**
+## Escape Hatch
+
+If user wants diagnosis early:
+
+```
+You: Current confidence is [X]/100. I can present now, but note:
+- [hypothesis not fully tested]
+- [evidence gap]
+
+[Present with "Preliminary" label]
+```

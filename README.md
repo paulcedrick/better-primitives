@@ -1,15 +1,22 @@
 # Better Primitives
 
-A Claude Code plugin providing enhanced planning, debugging, analysis, and software architecture design with thorough, question-driven approaches.
+A Claude Code plugin providing enhanced planning, debugging, analysis, and software architecture design with subagent-powered exploration and confidence-driven approaches.
+
+## What's New in v2.0
+
+- **Subagent delegation**: Commands now delegate exploration tasks to subagents for cost efficiency and parallelism
+- **Model selection**: Uses Sonnet/Haiku for exploration, Opus for synthesis
+- **Simplified architecture**: Commands-only structure (no separate skills)
+- **~70% token reduction**: Streamlined instructions without losing impact
 
 ## Commands
 
-| Command                      | Description                                                                                                                  |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `/better-primitives:plan`    | Enhanced planning with thorough questioning                                                                                  |
-| `/better-primitives:debug`   | Thorough debugging with confidence-scored investigation                                                                      |
-| `/better-primitives:analyze` | Thorough analysis for improvements with confidence-scored investigation (ISO 25010 categories, Impact/Effort prioritization) |
-| `/better-primitives:design`  | Thorough software architecture design with ATAM-inspired risk/trade-off analysis and C4-style diagrams                       |
+| Command                      | Description                                             |
+| ---------------------------- | ------------------------------------------------------- |
+| `/better-primitives:plan`    | Enhanced planning with subagent exploration             |
+| `/better-primitives:debug`   | Parallel hypothesis testing with subagent investigation |
+| `/better-primitives:analyze` | Code analysis with subagent-powered pattern detection   |
+| `/better-primitives:design`  | Architecture design with ATAM-style risk analysis       |
 
 ## Installation
 
@@ -28,19 +35,14 @@ claude plugin install paulcedrick/better-primitives
 ### Local Development
 
 ```bash
-# Clone the repository
 git clone https://github.com/paulcedrick/better-primitives.git
 cd better-primitives
-
-# Install locally
 claude plugin install .
 ```
 
 ## Usage
 
 ### Plan Command
-
-Use `/better-primitives:plan` to start enhanced planning:
 
 ```
 /better-primitives:plan Add user authentication to the app
@@ -49,16 +51,11 @@ Use `/better-primitives:plan` to start enhanced planning:
 Claude will:
 
 1. Ask clarifying questions about requirements
-2. Explore your codebase
-3. Ask technical questions based on what it found
-4. Confirm understanding
-5. Present a focused implementation plan
-
-The `thorough-planning` skill also activates automatically when Claude detects ambiguous requirements or multiple valid approaches.
+2. **Delegate codebase exploration to Sonnet subagent**
+3. Synthesize findings and ask technical questions
+4. Present implementation plan when confidence reaches HIGH (80+)
 
 ### Debug Command
-
-Use `/better-primitives:debug` to start thorough debugging:
 
 ```
 /better-primitives:debug The API returns 500 errors intermittently
@@ -67,15 +64,11 @@ Use `/better-primitives:debug` to start thorough debugging:
 Claude will:
 
 1. Gather symptoms with clarifying questions
-2. Form hypotheses and present them with confidence scores
-3. Investigate code systematically, asking confirmation questions
-4. Present root cause with evidence when confidence reaches HIGH (75+)
-
-The `thorough-debugging` skill also activates automatically when Claude detects bug reports, error messages, or unexpected behavior.
+2. Form hypotheses and present them
+3. **Launch parallel subagents to test hypotheses**
+4. Present root cause when confidence reaches HIGH (75+)
 
 ### Analyze Command
-
-Use `/better-primitives:analyze` to start thorough analysis for improvements:
 
 ```
 /better-primitives:analyze performance of the API handlers
@@ -83,26 +76,13 @@ Use `/better-primitives:analyze` to start thorough analysis for improvements:
 
 Claude will:
 
-1. Gather understanding of what you want to improve with clarifying questions
-2. Explore the target area and identify improvement opportunities
-3. Ask about priorities, trade-offs, and scope boundaries
-4. Validate findings with a second exploration pass
-5. Present categorized findings with impact levels
-6. Ask if you want an implementation plan
-
-The `thorough-analysis` skill also activates automatically when Claude detects requests to improve, optimize, refactor, or enhance code.
-
-Features include:
-
-- **Numeric confidence scoring** (0-100) aligned with `/debug` and `/plan`
-- **Walkthrough Protocol** - understand code before suggesting improvements
-- **Impact/Effort Matrix** - prioritize findings by value vs cost
-- **ISO 25010 Categories** - organize findings by standard quality characteristics
-- **Common Improvement Patterns** - reference guide for code smells
+1. Understand improvement goals
+2. **Delegate code exploration to subagents (parallel)**
+3. Present findings with Impact/Effort prioritization
+4. Validate findings and discuss trade-offs
+5. Offer implementation plan
 
 ### Design Command
-
-Use `/better-primitives:design` to start thorough architecture design:
 
 ```
 /better-primitives:design the authentication system
@@ -110,27 +90,21 @@ Use `/better-primitives:design` to start thorough architecture design:
 
 Claude will:
 
-1. Gather context about the system's purpose and stakeholders
-2. Explore the codebase using the Walkthrough Protocol
-3. Identify components, flows, and boundaries
-4. Analyze architectural risks (ATAM-style)
-5. Document trade-offs with rationale (ADR-style)
-6. Present architecture with diagrams when confidence reaches HIGH (80+)
+1. Gather context about purpose and stakeholders
+2. **Use subagents for component discovery and flow analysis**
+3. Document architecture with Mermaid/ASCII diagrams
+4. Analyze risks (ATAM-style) and trade-offs (ADR-style)
+5. Present design when confidence reaches HIGH (80+)
 
-The `thorough-design` skill supports three modes:
+## Subagent Model Selection
 
-- **Architect New** - Design a new feature/system before implementation
-- **Understand Existing** - Reverse-engineer and document current architecture
-- **Plan Evolution** - Design how to extend/modify existing architecture
-
-Features include:
-
-- **7-factor confidence metrics** - Context, Components, Flows, Boundaries, Risks, Trade-offs, Alignment
-- **Walkthrough Protocol** - understand systems before designing
-- **ATAM-inspired analysis** - identify architectural risks and non-risks
-- **ADR-style trade-offs** - document decisions with rationale
-- **Dual diagram support** - both Mermaid and ASCII art diagrams
-- **Integration with /plan** - design output can feed into implementation planning
+| Task Type               | Model  | Rationale                          |
+| ----------------------- | ------ | ---------------------------------- |
+| File search (Glob/Grep) | Haiku  | Fast, cheap, simple                |
+| Code analysis           | Sonnet | Good comprehension, cost-effective |
+| Hypothesis testing      | Sonnet | Can reason, cheaper than Opus      |
+| User interaction        | Opus   | Best judgment, nuanced responses   |
+| Final synthesis         | Opus   | High-quality output                |
 
 ## Structure
 
@@ -139,21 +113,23 @@ better-primitives/
 ├── .claude-plugin/
 │   └── plugin.json
 ├── commands/
-│   ├── plan.md
-│   ├── debug.md
-│   ├── analyze.md
-│   └── design.md
-├── skills/
-│   ├── thorough-planning/
-│   │   └── SKILL.md
-│   ├── thorough-debugging/
-│   │   └── SKILL.md
-│   ├── thorough-analysis/
-│   │   └── SKILL.md
-│   └── thorough-design/
-│       └── SKILL.md
+│   ├── plan.md      (~185 lines)
+│   ├── debug.md     (~200 lines)
+│   ├── analyze.md   (~220 lines)
+│   └── design.md    (~270 lines)
 └── README.md
 ```
+
+## Key Features
+
+- **Confidence metrics**: Numeric scoring (0-100) with clear thresholds
+- **Subagent delegation**: Cost-effective exploration with model selection
+- **Parallel execution**: Multiple exploration tasks run concurrently
+- **ISO 25010 categories**: Standard quality characteristics for analysis
+- **Impact/Effort matrix**: Prioritized findings
+- **ATAM-style risks**: Architectural risk analysis
+- **ADR-style trade-offs**: Decision documentation with rationale
+- **Escape hatches**: Early presentation when user requests
 
 ## License
 

@@ -1,192 +1,230 @@
 ---
-description: Start thorough analysis for improvements. Uses iterative confidence metrics to deeply understand what can be improved and how.
+description: Start thorough analysis for improvements with subagent-powered exploration. Uses iterative confidence metrics and ISO 25010 quality categories.
 ---
 
 # Analysis Mode
 
-You are now in analysis mode. Your goal is to **thoroughly analyze** the target area and identify meaningful improvements through iterative questioning and exploration.
+You are now in analysis mode. Your goal is to reach **HIGH confidence (80+)** in your recommendations before presenting final findings.
 
 ## Core Principle
 
-**Analyze iteratively. Quantify confidence. Confirm frequently.**
+**Analyze iteratively. Delegate exploration. Quantify impact. Confirm priorities.**
 
-After EVERY analysis step, calculate and display your confidence score. Keep analyzing until you reach HIGH confidence (80+) before presenting final findings.
+## Confidence Score
 
-## The Walkthrough Protocol
-
-Before identifying improvements, explain the code's purpose aloud. This forces you to understand what the code does before judging what it should do better.
-
-Use phrases like:
-
-- "Let me walk through what this code is meant to do..."
-- "This function's responsibility appears to be..."
-- "I see this pattern: [describe], which suggests..."
-
-Then ask: "Now that I understand its purpose, what could be improved?"
-
-## Confidence Metrics (Summary)
-
-Calculate confidence using this weighted formula:
+Calculate confidence using this formula:
 
 ```
 Score = Goals(20%) + Exploration(20%) + Opportunities(15%) + Priorities(15%) + Trade-offs(15%) + Alignment(15%)
 ```
 
-| Level          | Score  | Description                             |
-| -------------- | ------ | --------------------------------------- |
-| **INITIAL**    | 0-24   | Just starting, gathering information    |
-| **DEVELOPING** | 25-49  | Some understanding, gaps remain         |
-| **SOLID**      | 50-74  | Good understanding, validating          |
-| **HIGH**       | 75-89  | Strong understanding, ready to present  |
-| **READY**      | 90-100 | Complete understanding, high confidence |
+| Level      | Score | Description                    |
+| ---------- | ----- | ------------------------------ |
+| INITIAL    | 0-24  | Gathering information          |
+| DEVELOPING | 25-49 | Some understanding, gaps exist |
+| SOLID      | 50-74 | Good understanding, validating |
+| HIGH       | 75-89 | Ready to present findings      |
+| READY      | 90+   | Complete confidence            |
 
-Display the full metrics table at **every analysis step**.
+**Target:** Reach HIGH (80+) before presenting findings. Display score after each step.
 
-## Analysis Phases
+## Analysis Process
 
-### Phase 1: Initial Understanding (~15/100 INITIAL)
+### Phase 1: Goal Understanding (~15/100)
 
-Gather complete information about what needs improvement:
+Ask clarifying questions using AskUserQuestion:
 
-- What exactly should be improved?
+- What area should be improved?
 - Why now? What motivated this?
 - What does success look like?
-- What cannot be changed?
+- What constraints exist?
 
-### Phase 2: Code Exploration (~40/100 DEVELOPING)
+### Phase 2: Code Exploration (~40/100)
 
-Explore the target area using the Walkthrough Protocol:
+**Use the Walkthrough Protocol first:**
 
-- Walk through what the code does
-- Identify patterns and conventions
-- Note potential improvement opportunities
-- Document technical constraints
+```
+Before analyzing, let me walk through what this code does:
+1. [Purpose of the code]
+2. [Key flow]
+3. [Current patterns]
 
-### Phase 3: Deep Analysis (~60/100 SOLID)
+Understanding established. Now I can identify improvements.
+```
 
-Present initial findings with Impact/Effort scores and ask for prioritization:
+**Delegate exploration to subagents:**
 
-- Score findings on Impact (1-4) and Effort (1-4)
-- Priority = Impact + Effort (higher is better, max 8)
-- Group by ISO 25010 quality characteristics
-- Discuss trade-offs of proposed changes
+```
+Task (Explore, model=sonnet):
+"Analyze [target area] for:
+1. Code patterns used
+2. Potential improvement opportunities
+3. Dependencies and affected areas
 
-### Phase 4: Validation (~80/100 HIGH)
+Return structured summary with file paths and observations."
+```
 
-Validate findings against user priorities:
+**Launch parallel subagents** for different aspects:
 
-- Look for anything missed
-- Check if findings align with user goals
-- Discover any new information
+- Performance patterns (N+1 queries, sync operations)
+- Maintainability issues (large classes, duplication)
+- Security concerns (input validation, auth)
 
-**If new discoveries:** Loop back to Phase 3 and ask new questions.
+### Phase 3: Findings with Impact/Effort (~60/100)
 
-### Phase 5: Present Findings (HIGH)
+Present findings with prioritization:
 
-Only present final findings when HIGH confidence (80+) is reached:
+| Finding | Impact | Effort | Priority | Location    |
+| ------- | ------ | ------ | -------- | ----------- |
+| [issue] | 1-4    | 1-4    | sum      | `file:line` |
 
-- Summary of analysis
-- Findings grouped by priority (Do First, Plan for Soon, Defer)
-- Trade-offs acknowledged
-- Out of scope items
-- Ask if user wants implementation plan
+**Impact Scale:**
 
-## Impact/Effort Matrix
+- 4 = Critical (performance, security, core functionality)
+- 3 = Important (maintainability, future issues)
+- 2 = Moderate (nice improvement)
+- 1 = Minor (cosmetic)
 
-| Impact    | Score | Effort    | Score |
-| --------- | ----- | --------- | ----- |
-| Critical  | 4     | Low       | 4     |
-| Important | 3     | Medium    | 3     |
-| Moderate  | 2     | High      | 2     |
-| Minor     | 1     | Very High | 1     |
+**Effort Scale:**
+
+- 4 = Low (<1 hour)
+- 3 = Medium (1-4 hours)
+- 2 = High (day+ work)
+- 1 = Very High (multi-day)
 
 **Priority = Impact + Effort** (7-8: Do first, 5-6: Plan soon, 3-4: Consider, 1-2: Defer)
 
+Ask user about priorities using AskUserQuestion.
+
+### Phase 4: Validation (~80/100)
+
+Launch subagent to validate findings:
+
+```
+Task (Explore, model=sonnet):
+"Validate these findings in [area]:
+[list findings]
+
+Check if:
+1. Any related issues were missed
+2. Findings align with codebase patterns
+3. Proposed changes have side effects"
+```
+
+Present any new discoveries. Loop back if significant.
+
+### Phase 5: Final Presentation (~85/100)
+
+When confidence >= 80%, present:
+
+```markdown
+## Analysis Complete
+
+### Confidence: [score]/100 (HIGH)
+
+### Summary
+
+[1-2 sentences on what was analyzed and key findings]
+
+### Do First (Priority 7-8)
+
+| #   | Finding | Category | Impact | Effort | Location |
+| --- | ------- | -------- | ------ | ------ | -------- |
+
+### Plan for Soon (Priority 5-6)
+
+| #   | Finding | Category | Impact | Effort | Location |
+| --- | ------- | -------- | ------ | ------ | -------- |
+
+### Deferred
+
+| #   | Finding | Reason |
+| --- | ------- | ------ |
+
+### Trade-offs
+
+- [Change X]: [benefit] vs [cost]
+```
+
+Ask if user wants implementation plan.
+
 ## Quality Categories (ISO 25010)
 
-Organize findings by these standard characteristics:
+Group findings by these characteristics:
 
-1. **Performance Efficiency** - Speed, resources, capacity
-2. **Reliability** - Maturity, availability, fault tolerance
-3. **Security** - Confidentiality, integrity, authenticity
-4. **Maintainability** - Modularity, reusability, testability
-5. **Compatibility** - Co-existence, interoperability
-6. **Portability** - Adaptability, installability
+| Category            | Focus                           |
+| ------------------- | ------------------------------- |
+| **Performance**     | Speed, resources, capacity      |
+| **Reliability**     | Fault tolerance, recoverability |
+| **Security**        | Confidentiality, integrity      |
+| **Maintainability** | Modularity, testability         |
+| **Compatibility**   | Interoperability                |
 
-## Common Improvement Patterns
+## Common Patterns to Find
 
-Reference the **thorough-analysis skill** for detailed patterns including:
+| Pattern       | Symptoms                          | Impact    |
+| ------------- | --------------------------------- | --------- |
+| N+1 Query     | DB calls in loops                 | Critical  |
+| God Class     | >500 lines, many responsibilities | Important |
+| Feature Envy  | Method uses other class's data    | Important |
+| Dead Code     | Unused imports/functions          | Minor     |
+| Magic Numbers | Hard-coded values                 | Moderate  |
+| Missing Types | `any` types, no validation        | Moderate  |
 
-- God Class - Large class, many responsibilities
-- Feature Envy - Method uses other class's data more than its own
-- Long Method - Method > 20-30 lines, multiple abstractions
-- N+1 Query - Loop making individual database calls
-- Missing Abstraction - Duplicate code across 3+ locations
-- Premature Abstraction - Complex abstractions for single use case
-- Dead Code - Unused imports, unreachable branches
-- Magic Numbers - Hard-coded values with no explanation
+## Subagent Usage Summary
 
-## Tool Selection
+| Phase | Task               | Subagent | Model  |
+| ----- | ------------------ | -------- | ------ |
+| 2     | Pattern search     | Explore  | haiku  |
+| 2     | Code analysis      | Explore  | sonnet |
+| 4     | Finding validation | Explore  | sonnet |
+| 1,5   | User interaction   | (main)   | opus   |
 
-| Tool                   | Use When                                 |
-| ---------------------- | ---------------------------------------- |
-| **Grep**               | Finding patterns, consistency checks     |
-| **Glob**               | Locating file types, naming conventions  |
-| **Read**               | Understanding context (with Walkthrough) |
-| **LSP findReferences** | Checking usage before suggesting changes |
-| **LSP incomingCalls**  | Understanding dependencies               |
+## Factor Scoring Guide
+
+| Factor        | Low              | Medium                    | High                |
+| ------------- | ---------------- | ------------------------- | ------------------- |
+| Goals         | Vague area       | Core goal understood      | Explicit, confirmed |
+| Exploration   | No code read     | Key files examined        | All areas mapped    |
+| Opportunities | 1-2 obvious      | Several identified        | Comprehensive list  |
+| Priorities    | Not discussed    | User indicated preference | Explicit ranking    |
+| Trade-offs    | Not considered   | Main trade-offs noted     | All discussed       |
+| Alignment     | No confirmations | Basic confirmed           | Direction confirmed |
 
 ## Minimum Thresholds for HIGH
 
-- Goals Understood >= 70%
-- Codebase Explored >= 60%
-- Opportunities Found >= 50%
-- Priorities Confirmed >= 50%
-- Trade-offs Discussed >= 40%
-- User Alignment >= 50%
-
-If weighted score is 80+ but minimums not met, continue iterating.
-
-## Escape Hatches
-
-If user wants findings before reaching HIGH confidence:
-
-```
-You: Current confidence is 58/100. I can present findings now, but note these gaps:
-- Trade-offs not fully discussed
-- Validation pass incomplete
-
-[Present findings with "Preliminary" label and highlighted gaps]
-```
-
-Mark unvalidated findings as "Preliminary" or "Needs Validation".
-
-## Arguments
-
-If the user provides a focus area with the command:
-
-```
-/analyze performance of the API handlers
-```
-
-Use this as your starting focus, but still ask clarifying questions in Phase 1.
+- Goals >= 70%
+- Exploration >= 60%
+- Opportunities >= 50%
+- Priorities >= 50%
+- Trade-offs >= 40%
+- Alignment >= 50%
 
 ## Anti-Patterns
 
 **Don't:**
 
-- Present findings without understanding user's priorities
 - Skip the Walkthrough Protocol
-- Propose changes without discussing trade-offs
-- Skip validation exploration
-- Present overwhelming lists without prioritization
+- Present findings without priorities
+- Propose changes without trade-offs
+- Ignore user's constraints
 
 **Do:**
 
-- Use the Walkthrough Protocol before identifying improvements
-- Score findings on Impact/Effort for prioritization
-- Group by ISO 25010 quality characteristics
-- Confirm priorities and trade-offs explicitly
-- Ask if user wants implementation plan
+- Walk through code before analyzing
+- Delegate exploration to subagents
+- Score every finding (Impact/Effort)
+- Confirm priorities with user
+- Offer implementation plan
 
-Remember: **Thorough analysis prevents wasted effort on unwanted changes.**
+## Escape Hatch
+
+If user wants findings early:
+
+```
+You: Current confidence is [X]/100. I can present now, but note:
+- [trade-offs not discussed]
+- [validation incomplete]
+
+[Present with "Preliminary" label on unvalidated findings]
+```
