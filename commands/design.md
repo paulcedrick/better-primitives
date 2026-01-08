@@ -15,7 +15,7 @@ You are now in design mode. Your goal is to reach **HIGH confidence (80+)** befo
 Calculate confidence using this formula:
 
 ```
-Score = Context(15%) + Components(20%) + Flows(15%) + Boundaries(15%) + Risks(15%) + Trade-offs(10%) + Alignment(10%)
+Score = Context(15%) + Components(20%) + Flows(15%) + Boundaries(12%) + Risks(15%) + Trade-offs(13%) + Alignment(10%)
 ```
 
 | Level      | Score | Description                    |
@@ -35,6 +35,46 @@ This command supports three modes (detect from user intent):
 1. **Architect New** - Design a new feature/system
 2. **Understand Existing** - Document current architecture
 3. **Plan Evolution** - Extend/modify existing system
+
+## C4 Model Levels
+
+Architecture documentation uses C4 abstraction levels:
+
+| Level         | Focus                     | Diagrams               | When to Use                           |
+| ------------- | ------------------------- | ---------------------- | ------------------------------------- |
+| **Context**   | System in its environment | System context diagram | Always - shows external dependencies  |
+| **Container** | High-level tech choices   | Container diagram      | New systems, tech stack decisions     |
+| **Component** | Modules within containers | Component diagram      | Detailed design, integration planning |
+| **Code**      | Classes/functions         | Class diagram          | Rarely - only for complex algorithms  |
+
+**For most designs:** Focus on Context + Container + Component levels.
+
+## Model Enforcement (REQUIRED)
+
+You MUST follow these model restrictions for ALL Task tool invocations:
+
+| Task Type           | Model      | Subagent        | Constraint                                     |
+| ------------------- | ---------- | --------------- | ---------------------------------------------- |
+| File/pattern search | **haiku**  | Explore         | MUST use - fast, cheap                         |
+| Component discovery | **sonnet** | Explore         | MUST use - needs comprehension                 |
+| Flow analysis       | **opus**   | general-purpose | MUST use - complex multi-step tracing          |
+| Risk analysis       | **opus**   | general-purpose | MUST use - architectural decisions, trade-offs |
+| Design validation   | **sonnet** | Explore         | MUST use - pattern matching                    |
+| User interaction    | **opus**   | (main)          | MUST NOT spawn as subagent                     |
+
+**Negative Constraints:**
+
+- **Haiku** MUST NOT: analyze architecture, assess risks, validate designs, trace flows
+- **Sonnet** MUST NOT: be used for simple file searches (use haiku), flow analysis (use opus), risk analysis (use opus), present final designs
+- **Opus**: Use for flow analysis, risk analysis, and main thread only
+
+---
+
+Map to presentation views:
+
+- Context View → C4 Context
+- Component View → C4 Container + Component
+- Flow View → Sequence across containers
 
 ## Design Process
 
@@ -61,22 +101,40 @@ Before designing, let me explain what I understand:
 Understanding established. Now I can design.
 ```
 
-**Delegate exploration to subagents:**
+**Then apply Rubber Duck Protocol:**
+
+Explain the architecture aloud as if teaching someone:
+
+- "The system works by..."
+- "When a user does X, the data flows through..."
+- "We chose Y because..."
+
+This surfaces gaps in understanding before committing to design decisions.
+
+**Delegate exploration to subagents (MUST follow Model Enforcement table above):**
 
 ```
-# Launch in parallel:
+# Launch in parallel (single message, multiple Task calls):
 
-Task 1 (Explore, model=sonnet):
+# File search - MUST use haiku (DO NOT use sonnet - unnecessary cost)
+Task 1 (Explore, model=haiku):
+"Search for files related to [area].
+Return: file paths and brief descriptions."
+
+# Component discovery - MUST use sonnet (DO NOT use haiku - needs comprehension)
+Task 2 (Explore, model=sonnet):
 "Identify components in [area]. Return:
 - Component names and responsibilities
 - Dependencies between components
 - File paths for each"
 
-Task 2 (Explore, model=sonnet):
+# Flow analysis - MUST use opus (complex multi-step tracing, async boundaries)
+Task 3 (general-purpose, model=opus):
 "Analyze data flow in [area]. Return:
 - Entry points
-- Data transformations
-- Output destinations"
+- Data transformations (including async and conditional paths)
+- Output destinations
+- State changes across boundaries"
 ```
 
 ### Phase 3: Flow and Boundary Mapping (~65/100)
@@ -105,10 +163,56 @@ Identify extension points and interfaces.
 
 ### Phase 4: Risk and Trade-off Analysis (~80/100)
 
-**Delegate risk analysis:**
+**Define Quality Attribute Scenarios (ATAM technique):**
+
+For critical quality attributes, specify measurable scenarios:
+
+| Attribute     | Scenario          | Response Measure        |
+| ------------- | ----------------- | ----------------------- |
+| Performance   | [stimulus]        | [measurable response]   |
+| Security      | [threat scenario] | [detection + response]  |
+| Modifiability | [change request]  | [effort + scope]        |
+| Scalability   | [load increase]   | [degradation threshold] |
+
+Example:
+
+| Attribute     | Scenario                    | Response Measure                   |
+| ------------- | --------------------------- | ---------------------------------- |
+| Performance   | 100 concurrent API requests | 95th percentile < 200ms            |
+| Security      | SQL injection attempt       | Blocked, logged, alerted within 1s |
+| Modifiability | Add new payment provider    | < 1 day, isolated to PaymentModule |
+
+Use these scenarios to validate design decisions and identify risks.
+
+**Validate architectural assumptions:**
+
+For key assumptions, design validation experiments:
+
+```markdown
+### Assumption: [statement]
+
+**Test:** [how to verify]
+**Evidence needed:** [what would confirm/refute]
+```
+
+Delegate validation (MUST use sonnet - requires reasoning):
 
 ```
+# Assumption validation - MUST use sonnet (DO NOT use haiku - requires reasoning)
 Task (Explore, model=sonnet):
+"Validate assumption: [X]. Check:
+1. Does this pattern exist in codebase?
+2. Are dependencies compatible?
+3. Will this integrate with existing [system]?
+
+Return: supporting/refuting evidence."
+```
+
+**Delegate risk analysis (MUST use opus - architectural trade-offs require deep reasoning):**
+
+```
+# Risk analysis - MUST use opus + general-purpose (Sonnet fails on complex trade-off analysis)
+Task (general-purpose, model=opus):
 "Analyze architectural risks in [design]:
 - Single points of failure
 - Scalability bottlenecks
@@ -117,14 +221,30 @@ Task (Explore, model=sonnet):
 Return risks with severity and likelihood."
 ```
 
-Document trade-offs (ADR-style):
+**Document trade-offs using Architecture Decision Records:**
 
 ```markdown
-### Decision: [choice made]
+### ADR: [Short title]
 
-**Context:** [why decision needed]
-**Trade-off:** [what was sacrificed]
-**Alternatives:** [what else was considered]
+**Status:** [Proposed | Accepted | Deprecated | Superseded by ADR-X]
+
+**Context:**
+[Why this decision is needed. What forces are at play.]
+
+**Decision:**
+[What we chose to do]
+
+**Alternatives Considered:**
+
+1. [Alternative A] - rejected because [reason]
+2. [Alternative B] - rejected because [reason]
+
+**Consequences:**
+
+- [Positive outcome]
+- [Another benefit]
+- [Trade-off accepted]
+- [Negative consequence we must live with]
 ```
 
 ### Phase 5: Design Presentation (~85/100)
@@ -174,6 +294,27 @@ When confidence >= 80%, present:
 [How to add new features]
 ```
 
+### Phase 5.5: Design Validation (~90/100)
+
+Before seeking approval, validate the design against the codebase (MUST use sonnet - requires reasoning):
+
+```
+# Design validation - MUST use sonnet (DO NOT use haiku - requires reasoning)
+Task (Explore, model=sonnet):
+"Validate this architecture:
+[key components and patterns]
+
+Check:
+1. Alignment with existing codebase patterns
+2. Dependency compatibility
+3. Migration path from current state
+4. Integration points with existing features
+
+Return: validation results with concerns."
+```
+
+Address any concerns before presenting for approval.
+
 Ask for approval or if user wants implementation plan.
 
 ## Diagram Formats
@@ -208,14 +349,16 @@ User     Service     Database
   │◄Response─            │
 ```
 
-## Subagent Usage Summary
+## Subagent Usage Summary (REQUIRED - See Model Enforcement section)
 
-| Phase | Task                | Subagent        | Model  |
-| ----- | ------------------- | --------------- | ------ |
-| 2     | Component discovery | Explore         | sonnet |
-| 2     | Flow analysis       | Explore         | sonnet |
-| 4     | Risk analysis       | general-purpose | sonnet |
-| 1,5   | User interaction    | (main)          | opus   |
+| Phase | Task                | Subagent        | Model      | Enforcement                         |
+| ----- | ------------------- | --------------- | ---------- | ----------------------------------- |
+| 2     | File/pattern search | Explore         | **haiku**  | MUST use - fast/cheap               |
+| 2     | Component discovery | Explore         | **sonnet** | MUST use - needs comprehension      |
+| 2     | Flow analysis       | general-purpose | **opus**   | MUST use - complex multi-step tracing |
+| 4     | Risk analysis       | general-purpose | **opus**   | MUST use - architectural trade-offs |
+| 5.5   | Design validation   | Explore         | **sonnet** | MUST use - pattern matching         |
+| 1,5   | User interaction    | (main)          | **opus**   | MUST NOT spawn as subagent          |
 
 ## Factor Scoring Guide
 
@@ -234,8 +377,9 @@ User     Service     Database
 - Context >= 70%
 - Components >= 60%
 - Flows >= 50%
-- Boundaries >= 50%
+- Boundaries >= 45%
 - Risks >= 50%
+- Trade-offs >= 50%
 - Alignment >= 50%
 
 ## Anti-Patterns

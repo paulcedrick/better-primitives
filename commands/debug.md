@@ -28,6 +28,26 @@ Score = Evidence(25%) + Hypotheses(20%) + Confirmations(15%) + CodePath(12%) + S
 
 **Target:** Reach HIGH (75+) before presenting diagnosis. Display score after each step.
 
+## Model Enforcement (REQUIRED)
+
+You MUST follow these model restrictions for ALL Task tool invocations:
+
+| Task Type            | Model      | Subagent        | Constraint                              |
+| -------------------- | ---------- | --------------- | --------------------------------------- |
+| Error pattern search | **haiku**  | Explore         | MUST use - fast, cheap                  |
+| Code analysis        | **sonnet** | Explore         | MUST use - needs comprehension          |
+| Call hierarchy trace | **sonnet** | Explore         | MUST use - requires reasoning           |
+| Hypothesis testing   | **opus**   | general-purpose | MUST use - complex multi-step deduction |
+| User interaction     | **opus**   | (main)          | MUST NOT spawn as subagent              |
+
+**Negative Constraints:**
+
+- **Haiku** MUST NOT: analyze code logic, test hypotheses, trace complex flows
+- **Sonnet** MUST NOT: be used for simple pattern searches (use haiku), test complex hypotheses (use opus), present final diagnosis
+- **Opus**: Use for hypothesis testing (complex deduction) and main thread only
+
+---
+
 ## Debug Process
 
 ### Phase 1: Symptom Collection (~8/100)
@@ -57,19 +77,22 @@ Ask which seems most likely based on user's knowledge.
 
 ### Phase 3: Parallel Investigation (~55/100)
 
-**Delegate code searches to subagents:**
+**Delegate code searches to subagents (MUST follow Model Enforcement table above):**
 
 Use the Task tool to launch **parallel** exploration:
 
 ```
 # Launch these in parallel (single message, multiple Task calls):
 
+# Pattern search - MUST use haiku (DO NOT use sonnet - unnecessary cost)
 Task 1 (Explore, model=haiku):
 "Search for files containing [error message or pattern]"
 
+# Code analysis - MUST use sonnet (DO NOT use haiku - needs comprehension)
 Task 2 (Explore, model=sonnet):
 "Analyze [suspect file] for [hypothesis condition]"
 
+# Call trace - MUST use sonnet (DO NOT use haiku - requires reasoning)
 Task 3 (Explore, model=sonnet):
 "Trace call hierarchy for [function name]"
 ```
@@ -127,23 +150,24 @@ For each hypothesis, design an experiment:
 **Expected if false:** [different result]
 ```
 
-Delegate the test to a subagent:
+Delegate the test to a subagent (MUST use opus - complex multi-step deduction):
 
 ```
-Task (Explore, model=sonnet):
+# Hypothesis testing - MUST use opus + general-purpose (Sonnet fails silently on complex deduction)
+Task (general-purpose, model=opus):
 "Test hypothesis: [H]. Check if [condition] exists in [location].
 Return: evidence supporting or refuting the hypothesis."
 ```
 
-## Subagent Usage Summary
+## Subagent Usage Summary (REQUIRED - See Model Enforcement section)
 
-| Phase | Task                 | Subagent        | Model  |
-| ----- | -------------------- | --------------- | ------ |
-| 3     | Error pattern search | Explore         | haiku  |
-| 3     | Code analysis        | Explore         | sonnet |
-| 3     | Call hierarchy trace | Explore         | sonnet |
-| 3     | Hypothesis testing   | general-purpose | sonnet |
-| 1,4   | User interaction     | (main)          | opus   |
+| Phase | Task                 | Subagent        | Model      | Enforcement                             |
+| ----- | -------------------- | --------------- | ---------- | --------------------------------------- |
+| 3     | Error pattern search | Explore         | **haiku**  | MUST use - fast/cheap                   |
+| 3     | Code analysis        | Explore         | **sonnet** | MUST use - needs comprehension          |
+| 3     | Call hierarchy trace | Explore         | **sonnet** | MUST use - requires reasoning           |
+| 3     | Hypothesis testing   | general-purpose | **opus**   | MUST use - complex multi-step deduction |
+| 1,4   | User interaction     | (main)          | **opus**   | MUST NOT spawn as subagent              |
 
 ## Special Bug Types
 

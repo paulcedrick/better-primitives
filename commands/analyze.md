@@ -28,6 +28,25 @@ Score = Goals(20%) + Exploration(20%) + Opportunities(15%) + Priorities(15%) + T
 
 **Target:** Reach HIGH (80+) before presenting findings. Display score after each step.
 
+## Model Enforcement (REQUIRED)
+
+You MUST follow these model restrictions for ALL Task tool invocations:
+
+| Task Type           | Model      | Subagent | Constraint                     |
+| ------------------- | ---------- | -------- | ------------------------------ |
+| Pattern/file search | **haiku**  | Explore  | MUST use - fast, cheap         |
+| Code analysis       | **sonnet** | Explore  | MUST use - needs comprehension |
+| Finding validation  | **sonnet** | Explore  | MUST use - reasoning required  |
+| User interaction    | **opus**   | (main)   | MUST NOT spawn as subagent     |
+
+**Negative Constraints:**
+
+- **Haiku** MUST NOT: perform complex reasoning, synthesize findings, make decisions
+- **Sonnet** MUST NOT: be used for simple file searches (use haiku), present final deliverables
+- **Opus** MUST NOT: be spawned as a subagent - use in main thread only
+
+---
+
 ## Analysis Process
 
 ### Phase 1: Goal Understanding (~15/100)
@@ -52,9 +71,17 @@ Before analyzing, let me walk through what this code does:
 Understanding established. Now I can identify improvements.
 ```
 
-**Delegate exploration to subagents:**
+**Delegate exploration to subagents (MUST follow Model Enforcement table above):**
 
 ```
+# Launch in parallel (single message, multiple Task calls):
+
+# Pattern search - MUST use haiku (fast, cheap)
+Task (Explore, model=haiku):
+"Search for files related to [target area].
+Return: file paths and brief descriptions."
+
+# Code analysis - MUST use sonnet (needs comprehension)
 Task (Explore, model=sonnet):
 "Analyze [target area] for:
 1. Code patterns used
@@ -64,11 +91,11 @@ Task (Explore, model=sonnet):
 Return structured summary with file paths and observations."
 ```
 
-**Launch parallel subagents** for different aspects:
+**Launch parallel subagents** for different aspects (model=haiku for searches, model=sonnet for analysis):
 
-- Performance patterns (N+1 queries, sync operations)
-- Maintainability issues (large classes, duplication)
-- Security concerns (input validation, auth)
+- Performance patterns (N+1 queries, sync operations) → sonnet
+- Maintainability issues (large classes, duplication) → sonnet
+- Security concerns (input validation, auth) → sonnet
 
 ### Phase 3: Findings with Impact/Effort (~60/100)
 
@@ -98,9 +125,10 @@ Ask user about priorities using AskUserQuestion.
 
 ### Phase 4: Validation (~80/100)
 
-Launch subagent to validate findings:
+Launch subagent to validate findings (MUST use sonnet - requires reasoning):
 
 ```
+# Validation - MUST use sonnet (DO NOT use haiku - requires reasoning)
 Task (Explore, model=sonnet):
 "Validate these findings in [area]:
 [list findings]
@@ -171,14 +199,14 @@ Group findings by these characteristics:
 | Magic Numbers | Hard-coded values                 | Moderate  |
 | Missing Types | `any` types, no validation        | Moderate  |
 
-## Subagent Usage Summary
+## Subagent Usage Summary (REQUIRED - See Model Enforcement section)
 
-| Phase | Task               | Subagent | Model  |
-| ----- | ------------------ | -------- | ------ |
-| 2     | Pattern search     | Explore  | haiku  |
-| 2     | Code analysis      | Explore  | sonnet |
-| 4     | Finding validation | Explore  | sonnet |
-| 1,5   | User interaction   | (main)   | opus   |
+| Phase | Task               | Subagent | Model      | Enforcement                    |
+| ----- | ------------------ | -------- | ---------- | ------------------------------ |
+| 2     | Pattern search     | Explore  | **haiku**  | MUST use - fast/cheap          |
+| 2     | Code analysis      | Explore  | **sonnet** | MUST use - needs comprehension |
+| 4     | Finding validation | Explore  | **sonnet** | MUST use - requires reasoning  |
+| 1,5   | User interaction   | (main)   | **opus**   | MUST NOT spawn as subagent     |
 
 ## Factor Scoring Guide
 

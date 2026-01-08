@@ -28,6 +28,25 @@ Score = Intent(25%) + Context(20%) + Requirements(15%) + Solution(20%) + Risk(10
 
 **Target:** Reach HIGH (80+) before presenting the plan. Display score after each step.
 
+## Model Enforcement (REQUIRED)
+
+You MUST follow these model restrictions for ALL Task tool invocations:
+
+| Task Type          | Model      | Subagent        | Constraint                                            |
+| ------------------ | ---------- | --------------- | ----------------------------------------------------- |
+| File search        | **haiku**  | Explore         | MUST use - fast, cheap                                |
+| Code analysis      | **sonnet** | Explore         | MUST use - needs comprehension                        |
+| Deep investigation | **opus**   | general-purpose | MUST use - architectural decisions, complex reasoning |
+| User interaction   | **opus**   | (main)          | MUST NOT spawn as subagent                            |
+
+**Negative Constraints:**
+
+- **Haiku** MUST NOT: analyze code patterns, investigate dependencies, reason about architecture
+- **Sonnet** MUST NOT: be used for simple file searches (use haiku), deep investigation (use opus), present final plans
+- **Opus**: Use for deep investigation (architectural decisions) and main thread only
+
+---
+
 ## Planning Process
 
 ### Phase 1: Intent Clarification (~15/100)
@@ -41,28 +60,29 @@ Ask clarifying questions using AskUserQuestion:
 
 ### Phase 2: Codebase Exploration (~45/100)
 
-**Delegate exploration to subagents for efficiency:**
-
-Use the Task tool with:
-
-- `subagent_type`: "Explore"
-- `model`: "sonnet" (cost-effective for exploration)
-
-Prompt the subagent to:
+**Delegate exploration to subagents (MUST follow Model Enforcement table above):**
 
 ```
-Search the codebase for:
-1. Files related to [feature area]
-2. Existing patterns and conventions
-3. Dependencies and affected areas
+# Launch in parallel (single message, multiple Task calls):
+
+# File search - MUST use haiku (DO NOT use sonnet - unnecessary cost)
+Task 1 (Explore, model=haiku):
+"Search for files related to [feature area].
+Return: file paths and brief descriptions."
+
+# Code analysis - MUST use sonnet (DO NOT use haiku - needs comprehension)
+Task 2 (Explore, model=sonnet):
+"Analyze the codebase for:
+1. Existing patterns and conventions
+2. Dependencies and affected areas
 
 Return a structured summary with:
 - Key files found (with paths)
 - Patterns observed
-- Potential integration points
+- Potential integration points"
 ```
 
-**Launch multiple exploration subagents in parallel** when searching different areas.
+**Launch multiple exploration subagents in parallel** when searching different areas (model=haiku for file searches, model=sonnet for analysis).
 
 ### Phase 3: Solution Validation (~65/100)
 
@@ -152,14 +172,14 @@ Then ask for approval:
 | Risk         | Not considered   | Main risks noted     | Mitigations planned       |
 | Alignment    | No confirmations | Basic confirmed      | Key decisions confirmed   |
 
-## Subagent Usage Summary
+## Subagent Usage Summary (REQUIRED - See Model Enforcement section)
 
-| Phase | Task               | Subagent        | Model  |
-| ----- | ------------------ | --------------- | ------ |
-| 2     | File search        | Explore         | haiku  |
-| 2     | Code analysis      | Explore         | sonnet |
-| 3     | Deep investigation | general-purpose | sonnet |
-| 1,4   | User interaction   | (main)          | opus   |
+| Phase | Task               | Subagent        | Model      | Enforcement                        |
+| ----- | ------------------ | --------------- | ---------- | ---------------------------------- |
+| 2     | File search        | Explore         | **haiku**  | MUST use - fast/cheap              |
+| 2     | Code analysis      | Explore         | **sonnet** | MUST use - needs comprehension     |
+| 3     | Deep investigation | general-purpose | **opus**   | MUST use - architectural decisions |
+| 1,4   | User interaction   | (main)          | **opus**   | MUST NOT spawn as subagent         |
 
 ## Minimum Thresholds for HIGH
 
