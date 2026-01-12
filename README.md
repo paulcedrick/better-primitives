@@ -2,11 +2,19 @@
 
 A Claude Code plugin providing enhanced planning, debugging, analysis, and software architecture design with subagent-powered exploration and confidence-driven approaches.
 
-## What's New in v2.0
+## What's New in v3.0
 
-- **Subagent delegation**: Commands now delegate exploration tasks to subagents for cost efficiency and parallelism
-- **Model selection**: Uses Sonnet/Haiku for exploration, Opus for synthesis
-- **Simplified architecture**: Commands-only structure (no separate skills)
+- **Execution Subagent**: Plans can now be automatically executed by an opus subagent
+- **Web Research**: Phase 2 now includes web research for best practices and documentation
+- **Hybrid Cost Model**: Haiku triage → Sonnet analysis → Opus escalation pattern reduces costs by ~35%
+- **Pre-flight Checks**: New Phase 0.5 validates repository health before planning
+- **Complexity Scoring**: New Phase 5.5 scores implementation complexity before execution
+- **Context Optimization**: Main thread never reads files directly - all exploration via subagents
+
+### v2.0 Features (retained)
+
+- **Subagent delegation**: Commands delegate exploration tasks to subagents for cost efficiency
+- **Model selection**: Uses Haiku/Sonnet for exploration, Opus for synthesis and execution
 - **~70% token reduction**: Streamlined instructions without losing impact
 
 ## Commands
@@ -50,10 +58,13 @@ claude plugin install .
 
 Claude will:
 
-1. Ask clarifying questions about requirements
-2. **Delegate codebase exploration to Sonnet subagent**
-3. Synthesize findings and ask technical questions
-4. Present implementation plan when confidence reaches HIGH (80+)
+1. **Pre-flight check** - Verify repository health (haiku subagent)
+2. Ask clarifying questions about requirements
+3. **Parallel exploration** - 5 subagents for file search, test discovery, code analysis, approach testing, and web research
+4. **Hybrid validation** - Haiku triage → Sonnet analysis → Opus escalation (only when needed)
+5. Synthesize findings and present plan when confidence reaches HIGH (80+)
+6. **Complexity scoring** - Score implementation difficulty before execution
+7. **Optional execution** - Launch opus subagent to implement the plan autonomously
 
 ### Debug Command
 
@@ -98,13 +109,29 @@ Claude will:
 
 ## Subagent Model Selection
 
-| Task Type               | Model  | Rationale                          |
-| ----------------------- | ------ | ---------------------------------- |
-| File search (Glob/Grep) | Haiku  | Fast, cheap, simple                |
-| Code analysis           | Sonnet | Good comprehension, cost-effective |
-| Hypothesis testing      | Sonnet | Can reason, cheaper than Opus      |
-| User interaction        | Opus   | Best judgment, nuanced responses   |
-| Final synthesis         | Opus   | High-quality output                |
+| Task Type               | Model  | Rationale                             |
+| ----------------------- | ------ | ------------------------------------- |
+| File search (Glob/Grep) | Haiku  | Fast, cheap, simple                   |
+| Pattern triage          | Haiku  | Flag areas for deeper analysis        |
+| Pre-flight checks       | Haiku  | Simple health verification            |
+| Code analysis           | Sonnet | Good comprehension, cost-effective    |
+| Web research            | Sonnet | WebSearch/WebFetch for best practices |
+| Targeted analysis       | Sonnet | Analyze areas flagged by triage       |
+| Complexity scoring      | Sonnet | Quantify implementation effort        |
+| Flow/Risk escalation    | Opus   | Only for high-severity findings       |
+| Plan review             | Opus   | Quality-critical synthesis            |
+| Plan execution          | Opus   | Autonomous implementation             |
+| User interaction        | Opus   | Best judgment, nuanced responses      |
+
+### Cost Optimization Strategy
+
+```
+Phase 3.5a: Haiku triage (4 parallel) → flags areas
+Phase 3.5b: Sonnet analysis (2-4 conditional) → analyzes flagged areas
+Phase 3.5c: Opus escalation (0-2 conditional) → only high-severity
+```
+
+**Result**: ~35% cost reduction for simple features, ~15% for complex features
 
 ## Structure
 
@@ -113,7 +140,7 @@ better-primitives/
 ├── .claude-plugin/
 │   └── plugin.json
 ├── commands/
-│   ├── plan.md      (~185 lines)
+│   ├── plan.md      (~690 lines) - Enhanced with execution subagent
 │   ├── debug.md     (~200 lines)
 │   ├── analyze.md   (~220 lines)
 │   └── design.md    (~270 lines)
@@ -125,6 +152,12 @@ better-primitives/
 - **Confidence metrics**: Numeric scoring (0-100) with clear thresholds
 - **Subagent delegation**: Cost-effective exploration with model selection
 - **Parallel execution**: Multiple exploration tasks run concurrently
+- **Hybrid cost model**: Haiku triage → Sonnet analysis → Opus escalation
+- **Web research**: Automatic fetching of best practices and documentation
+- **Execution subagent**: Autonomous plan implementation
+- **Complexity scoring**: Implementation difficulty assessment
+- **Pre-flight checks**: Repository health validation
+- **Context optimization**: Main thread never reads files directly
 - **ISO 25010 categories**: Standard quality characteristics for analysis
 - **Impact/Effort matrix**: Prioritized findings
 - **ATAM-style risks**: Architectural risk analysis
