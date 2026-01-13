@@ -6,13 +6,13 @@ description: Start thorough analysis for improvements with subagent-powered expl
 
 You are now in analysis mode. Your goal is to reach **HIGH confidence (80+)** in your recommendations before presenting final findings.
 
+> **Reference:** See `_base.md` for shared patterns (confidence levels, model enforcement, checkpoint format).
+
 ## Core Principle
 
 **Analyze iteratively. Delegate exploration. Quantify impact. Confirm priorities.**
 
 ## Confidence Score
-
-Calculate confidence using this formula:
 
 ```
 Score = Goals(20%) + Exploration(20%) + Opportunities(15%) + Priorities(15%) + Trade-offs(15%) + Alignment(15%)
@@ -26,11 +26,9 @@ Score = Goals(20%) + Exploration(20%) + Opportunities(15%) + Priorities(15%) + T
 | HIGH       | 75-89 | Ready to present findings      |
 | READY      | 90+   | Complete confidence            |
 
-**Target:** Reach HIGH (80+) before presenting findings. Display score after each step.
+**Target:** Reach HIGH (80+) before presenting findings. Display score after each phase.
 
 ## Model Enforcement (REQUIRED)
-
-You MUST follow these model restrictions for ALL Task tool invocations:
 
 | Task Type           | Model      | Subagent | Constraint                     |
 | ------------------- | ---------- | -------- | ------------------------------ |
@@ -53,10 +51,102 @@ You MUST follow these model restrictions for ALL Task tool invocations:
 
 Ask clarifying questions using AskUserQuestion:
 
-- What area should be improved?
-- Why now? What motivated this?
-- What does success look like?
-- What constraints exist?
+```json
+{
+  "questions": [
+    {
+      "question": "What area of the codebase should be analyzed for improvements?",
+      "header": "Target Area",
+      "options": [
+        {
+          "label": "Specific module",
+          "description": "Focus on a particular component or feature"
+        },
+        {
+          "label": "Entire codebase",
+          "description": "Broad analysis across all areas"
+        },
+        {
+          "label": "Performance hotspots",
+          "description": "Focus on slow or resource-heavy code"
+        }
+      ],
+      "multiSelect": false
+    },
+    {
+      "question": "What motivated this analysis?",
+      "header": "Motivation",
+      "options": [
+        {
+          "label": "Technical debt",
+          "description": "Code quality has degraded over time"
+        },
+        {
+          "label": "Performance issues",
+          "description": "Slow response times or high resource usage"
+        },
+        {
+          "label": "Upcoming changes",
+          "description": "Need to understand before modifying"
+        },
+        {
+          "label": "Security review",
+          "description": "Identify potential vulnerabilities"
+        }
+      ],
+      "multiSelect": true
+    },
+    {
+      "question": "What does success look like for this analysis?",
+      "header": "Success",
+      "options": [
+        {
+          "label": "Prioritized list",
+          "description": "Ranked issues with effort estimates"
+        },
+        {
+          "label": "Quick wins",
+          "description": "Focus on easy, high-impact changes"
+        },
+        {
+          "label": "Comprehensive audit",
+          "description": "Thorough documentation of all issues"
+        }
+      ],
+      "multiSelect": false
+    },
+    {
+      "question": "How should improvements be verified?",
+      "header": "Testing",
+      "options": [
+        {
+          "label": "Existing tests",
+          "description": "Run existing test suite to verify no regressions"
+        },
+        {
+          "label": "New tests needed",
+          "description": "Write new tests for changed functionality"
+        },
+        {
+          "label": "Manual verification",
+          "description": "I'll verify manually, no automated tests needed"
+        }
+      ],
+      "multiSelect": false
+    }
+  ]
+}
+```
+
+**Iterate if needed:**
+
+If Goals score < 70%:
+
+1. Identify gap: "I need to understand [specific unclear aspect]"
+2. Ask targeted follow-up question
+3. Re-evaluate and proceed when Goals >= 70%
+
+**Checkpoint:** Display confidence score. Proceed when Goals >= 70%.
 
 ### Phase 2: Code Exploration (~40/100)
 
@@ -71,17 +161,27 @@ Before analyzing, let me walk through what this code does:
 Understanding established. Now I can identify improvements.
 ```
 
-**Delegate exploration to subagents (MUST follow Model Enforcement table above):**
+**Then apply Rubber Duck Protocol:**
+
+Explain the code aloud as if teaching someone:
+
+- "This module handles..."
+- "When a request comes in, the data flows through..."
+- "The current approach works by..."
+
+This surfaces gaps in understanding before proposing changes.
+
+**Delegate exploration to subagents (MUST follow Model Enforcement table):**
 
 ```
 # Launch in parallel (single message, multiple Task calls):
 
-# Pattern search - MUST use haiku (fast, cheap)
+# Pattern search - MUST use haiku
 Task (Explore, model=haiku):
 "Search for files related to [target area].
 Return: file paths and brief descriptions."
 
-# Code analysis - MUST use sonnet (needs comprehension)
+# Code analysis - MUST use sonnet
 Task (Explore, model=sonnet):
 "Analyze [target area] for:
 1. Code patterns used
@@ -96,6 +196,16 @@ Return structured summary with file paths and observations."
 - Performance patterns (N+1 queries, sync operations) → sonnet
 - Maintainability issues (large classes, duplication) → sonnet
 - Security concerns (input validation, auth) → sonnet
+
+**Iterate if needed:**
+
+If Exploration score < 60%:
+
+1. Identify gap: "I haven't examined [specific area]"
+2. Launch additional targeted subagents
+3. Re-evaluate and proceed when Exploration >= 60%
+
+**Checkpoint:** Display confidence score. Proceed when Exploration >= 60%.
 
 ### Phase 3: Findings with Impact/Effort (~60/100)
 
@@ -121,14 +231,50 @@ Present findings with prioritization:
 
 **Priority = Impact + Effort** (7-8: Do first, 5-6: Plan soon, 3-4: Consider, 1-2: Defer)
 
-Ask user about priorities using AskUserQuestion.
+Ask user about priorities:
+
+```json
+{
+  "questions": [
+    {
+      "question": "Based on these findings, which priority level should I focus on?",
+      "header": "Focus",
+      "options": [
+        {
+          "label": "Do First (7-8)",
+          "description": "High impact, reasonable effort - best ROI"
+        },
+        {
+          "label": "All actionable (5+)",
+          "description": "Include Plan Soon items as well"
+        },
+        {
+          "label": "Quick wins only",
+          "description": "High effort (4) items regardless of impact"
+        }
+      ],
+      "multiSelect": false
+    }
+  ]
+}
+```
+
+**Iterate if needed:**
+
+If Priorities score < 50% or user disagrees with scoring:
+
+1. Re-score findings with user input
+2. Ask follow-up questions about specific trade-offs
+3. Proceed when Priorities >= 50%
+
+**Checkpoint:** Display confidence score. Proceed when Priorities >= 50%.
 
 ### Phase 4: Validation (~80/100)
 
-Launch subagent to validate findings (MUST use sonnet - requires reasoning):
+Launch subagent to validate findings (MUST use sonnet):
 
 ```
-# Validation - MUST use sonnet (DO NOT use haiku - requires reasoning)
+# Validation - MUST use sonnet
 Task (Explore, model=sonnet):
 "Validate these findings in [area]:
 [list findings]
@@ -139,7 +285,17 @@ Check if:
 3. Proposed changes have side effects"
 ```
 
-Present any new discoveries. Loop back if significant.
+Present any new discoveries and update findings table.
+
+**Iterate if needed:**
+
+If validation reveals significant gaps or Trade-offs score < 40%:
+
+1. Launch targeted subagent for new findings
+2. Update findings table with new discoveries
+3. Re-confirm priorities with user if needed
+
+**Checkpoint:** Display confidence score. Proceed when overall score >= 80%.
 
 ### Phase 5: Final Presentation (~85/100)
 
@@ -172,9 +328,19 @@ When confidence >= 80%, present:
 ### Trade-offs
 
 - [Change X]: [benefit] vs [cost]
+
+### Unresolved Questions
+
+- [Question that couldn't be answered during analysis]
+- [Assumption made due to lack of information]
+- [Area requiring further investigation]
+
+_If these affect implementation priority, address them before proceeding._
 ```
 
 Ask if user wants implementation plan.
+
+---
 
 ## Quality Categories (ISO 25010)
 
@@ -199,25 +365,24 @@ Group findings by these characteristics:
 | Magic Numbers | Hard-coded values                 | Moderate  |
 | Missing Types | `any` types, no validation        | Moderate  |
 
-## Subagent Usage Summary (REQUIRED - See Model Enforcement section)
-
-| Phase | Task               | Subagent | Model      | Enforcement                    |
-| ----- | ------------------ | -------- | ---------- | ------------------------------ |
-| 2     | Pattern search     | Explore  | **haiku**  | MUST use - fast/cheap          |
-| 2     | Code analysis      | Explore  | **sonnet** | MUST use - needs comprehension |
-| 4     | Finding validation | Explore  | **sonnet** | MUST use - requires reasoning  |
-| 1,5   | User interaction   | (main)   | **opus**   | MUST NOT spawn as subagent     |
+---
 
 ## Factor Scoring Guide
 
-| Factor        | Low              | Medium                    | High                |
-| ------------- | ---------------- | ------------------------- | ------------------- |
-| Goals         | Vague area       | Core goal understood      | Explicit, confirmed |
-| Exploration   | No code read     | Key files examined        | All areas mapped    |
-| Opportunities | 1-2 obvious      | Several identified        | Comprehensive list  |
-| Priorities    | Not discussed    | User indicated preference | Explicit ranking    |
-| Trade-offs    | Not considered   | Main trade-offs noted     | All discussed       |
-| Alignment     | No confirmations | Basic confirmed           | Direction confirmed |
+| Factor        | Low (0-30%)                 | Medium (31-70%)                          | High (71-100%)                                    |
+| ------------- | --------------------------- | ---------------------------------------- | ------------------------------------------------- |
+| Goals         | < 2 questions answered      | 2-3 questions answered                   | All 4 questions answered AND user confirmed scope |
+| Exploration   | < 3 files examined          | 3-7 files AND primary dependencies found | 8+ files AND all integration points mapped        |
+| Opportunities | 1-2 obvious issues found    | 3-5 issues with Impact/Effort scores     | 6+ issues across multiple ISO 25010 categories    |
+| Priorities    | No user input on priorities | User indicated general preference        | User ranked top items AND confirmed defer list    |
+| Trade-offs    | 0 trade-offs documented     | 1-2 trade-offs noted                     | Trade-off documented for each "Do First" item     |
+| Alignment     | 0 confirmations from user   | 1 confirmation (goals OR priorities)     | 2+ confirmations AND final direction approved     |
+
+**How to calculate score:**
+
+1. Rate each factor using the criteria above (0-100%)
+2. Apply weights: Goals(20%) + Exploration(20%) + Opportunities(15%) + Priorities(15%) + Trade-offs(15%) + Alignment(15%)
+3. Sum for total confidence score
 
 ## Minimum Thresholds for HIGH
 
@@ -227,6 +392,8 @@ Group findings by these characteristics:
 - Priorities >= 50%
 - Trade-offs >= 40%
 - Alignment >= 50%
+
+---
 
 ## Anti-Patterns
 
@@ -250,9 +417,11 @@ Group findings by these characteristics:
 If user wants findings early:
 
 ```
-You: Current confidence is [X]/100. I can present now, but note:
-- [trade-offs not discussed]
-- [validation incomplete]
+Current confidence is [X]/100. I can present now, but note:
+- [Gap 1: what's unvalidated]
+- [Gap 2: risks]
 
-[Present with "Preliminary" label on unvalidated findings]
+**Proceeding with preliminary analysis...**
+
+[Present with "PRELIMINARY" labels on unvalidated findings]
 ```

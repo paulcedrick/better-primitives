@@ -2,7 +2,16 @@
 
 A Claude Code plugin providing enhanced planning, debugging, analysis, and software architecture design with subagent-powered exploration and confidence-driven approaches.
 
-## What's New in v3.0
+## What's New in v3.1
+
+- **Shared Base Template**: Common patterns extracted to `_base.md` for consistency and maintainability
+- **Standardized JSON Questions**: All `AskUserQuestion` calls use consistent JSON format across commands
+- **Testing Strategy Questions**: Every command now asks how changes should be verified
+- **Enhanced Factor Scoring**: File count thresholds now include qualitative sufficiency criteria
+- **Parallelized Design Phase 4**: Assumption validation and risk analysis run concurrently
+- **Cleaner Phase Structure**: plan.md reorganized with clearer phase names (Approach Selection, Deep Validation)
+
+### v3.0 Features (retained)
 
 - **Execution Subagent**: Plans can now be automatically executed by an opus subagent
 - **Web Research**: Phase 2 now includes web research for best practices and documentation
@@ -59,12 +68,13 @@ claude plugin install .
 Claude will:
 
 1. **Pre-flight check** - Verify repository health (haiku subagent)
-2. Ask clarifying questions about requirements
+2. Ask clarifying questions about requirements (including testing strategy)
 3. **Parallel exploration** - 5 subagents for file search, test discovery, code analysis, approach testing, and web research
-4. **Hybrid validation** - Haiku triage → Sonnet analysis → Opus escalation (only when needed)
-5. Synthesize findings and present plan when confidence reaches HIGH (80+)
-6. **Complexity scoring** - Score implementation difficulty before execution
-7. **Optional execution** - Launch opus subagent to implement the plan autonomously
+4. **Approach selection** - Present options with trade-offs, get user decision
+5. **Deep validation** - Flow analysis and risk assessment (opus subagents in parallel)
+6. **Plan review** - Sonnet validates plan quality before presentation
+7. **Complexity scoring** - Score implementation difficulty before execution
+8. **Optional execution** - Launch opus subagent to implement the plan autonomously
 
 ### Debug Command
 
@@ -74,7 +84,7 @@ Claude will:
 
 Claude will:
 
-1. Gather symptoms with clarifying questions
+1. Gather symptoms with clarifying questions (including testing strategy)
 2. Form hypotheses and present them
 3. **Launch parallel subagents to test hypotheses**
 4. Present root cause when confidence reaches HIGH (75+)
@@ -87,7 +97,7 @@ Claude will:
 
 Claude will:
 
-1. Understand improvement goals
+1. Understand improvement goals (including testing strategy)
 2. **Delegate code exploration to subagents (parallel)**
 3. Present findings with Impact/Effort prioritization
 4. Validate findings and discuss trade-offs
@@ -101,10 +111,10 @@ Claude will:
 
 Claude will:
 
-1. Gather context about purpose and stakeholders
-2. **Use subagents for component discovery and flow analysis**
+1. Gather context about purpose and stakeholders (including validation approach)
+2. **Use subagents for component discovery and flow analysis (parallel)**
 3. Document architecture with Mermaid/ASCII diagrams
-4. Analyze risks (ATAM-style) and trade-offs (ADR-style)
+4. **Parallel validation** - Assumption validation and risk analysis run concurrently
 5. Present design when confidence reaches HIGH (80+)
 
 ## Subagent Model Selection
@@ -118,8 +128,8 @@ Claude will:
 | Web research            | Sonnet | WebSearch/WebFetch for best practices |
 | Targeted analysis       | Sonnet | Analyze areas flagged by triage       |
 | Complexity scoring      | Sonnet | Quantify implementation effort        |
+| Plan review             | Sonnet | Pattern matching, completeness check  |
 | Flow/Risk escalation    | Opus   | Only for high-severity findings       |
-| Plan review             | Opus   | Quality-critical synthesis            |
 | Plan execution          | Opus   | Autonomous implementation             |
 | User interaction        | Opus   | Best judgment, nuanced responses      |
 
@@ -140,10 +150,11 @@ better-primitives/
 ├── .claude-plugin/
 │   └── plugin.json
 ├── commands/
-│   ├── plan.md      (~690 lines) - Enhanced with execution subagent
-│   ├── debug.md     (~200 lines)
-│   ├── analyze.md   (~220 lines)
-│   └── design.md    (~270 lines)
+│   ├── _base.md      (~120 lines) - Shared patterns and templates
+│   ├── plan.md       (~640 lines) - Enhanced with execution subagent
+│   ├── debug.md      (~365 lines) - Parallel hypothesis testing
+│   ├── analyze.md    (~375 lines) - ISO 25010 quality categories
+│   └── design.md     (~510 lines) - ATAM-style risk analysis
 └── README.md
 ```
 
@@ -153,6 +164,8 @@ better-primitives/
 - **Subagent delegation**: Cost-effective exploration with model selection
 - **Parallel execution**: Multiple exploration tasks run concurrently
 - **Hybrid cost model**: Haiku triage → Sonnet analysis → Opus escalation
+- **Standardized questions**: Consistent JSON format for all user interactions
+- **Testing strategy**: Every command asks how changes should be verified
 - **Web research**: Automatic fetching of best practices and documentation
 - **Execution subagent**: Autonomous plan implementation
 - **Complexity scoring**: Implementation difficulty assessment
@@ -163,6 +176,19 @@ better-primitives/
 - **ATAM-style risks**: Architectural risk analysis
 - **ADR-style trade-offs**: Decision documentation with rationale
 - **Escape hatches**: Early presentation when user requests
+
+## Shared Patterns (\_base.md)
+
+The `_base.md` file contains reusable patterns referenced by all commands:
+
+- **Confidence Score Levels**: Standard INITIAL → DEVELOPING → SOLID → HIGH → READY scale
+- **Model Enforcement Principles**: When to use Haiku vs Sonnet vs Opus
+- **Standard Checkpoint Pattern**: How to display and iterate on confidence scores
+- **Standard AskUserQuestion Format**: JSON structure for user questions
+- **Anti-Patterns**: Universal don'ts and dos
+- **Escape Hatch Pattern**: How to handle early presentation requests
+- **Testing Strategy Question**: Standard question about verification
+- **Unresolved Questions Section**: Template for documenting gaps
 
 ## License
 

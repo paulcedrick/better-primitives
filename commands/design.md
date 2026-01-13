@@ -6,13 +6,13 @@ description: Start thorough software architecture design with subagent-powered e
 
 You are now in design mode. Your goal is to reach **HIGH confidence (80+)** before presenting an architecture design.
 
+> **Reference:** See `_base.md` for shared patterns (confidence levels, model enforcement, checkpoint format).
+
 ## Core Principle
 
 **Understand before designing. Delegate exploration. Diagram explicitly. Validate trade-offs.**
 
 ## Confidence Score
-
-Calculate confidence using this formula:
 
 ```
 Score = Context(15%) + Components(20%) + Flows(15%) + Boundaries(12%) + Risks(15%) + Trade-offs(13%) + Alignment(10%)
@@ -26,7 +26,7 @@ Score = Context(15%) + Components(20%) + Flows(15%) + Boundaries(12%) + Risks(15
 | HIGH       | 75-89 | Ready to present design        |
 | READY      | 90+   | Complete confidence            |
 
-**Target:** Reach HIGH (80+) before presenting design. Display score after each step.
+**Target:** Reach HIGH (80+) before presenting design. Display score after each phase.
 
 ## Design Modes
 
@@ -51,8 +51,6 @@ Architecture documentation uses C4 abstraction levels:
 
 ## Model Enforcement (REQUIRED)
 
-You MUST follow these model restrictions for ALL Task tool invocations:
-
 | Task Type           | Model      | Subagent        | Constraint                                     |
 | ------------------- | ---------- | --------------- | ---------------------------------------------- |
 | File/pattern search | **haiku**  | Explore         | MUST use - fast, cheap                         |
@@ -65,16 +63,10 @@ You MUST follow these model restrictions for ALL Task tool invocations:
 **Negative Constraints:**
 
 - **Haiku** MUST NOT: analyze architecture, assess risks, validate designs, trace flows
-- **Sonnet** MUST NOT: be used for simple file searches (use haiku), flow analysis (use opus), risk analysis (use opus), present final designs
+- **Sonnet** MUST NOT: be used for simple file searches (use haiku), flow analysis (use opus), risk analysis (use opus)
 - **Opus**: Use for flow analysis, risk analysis, and main thread only
 
 ---
-
-Map to presentation views:
-
-- Context View → C4 Context
-- Component View → C4 Container + Component
-- Flow View → Sequence across containers
 
 ## Design Process
 
@@ -82,10 +74,100 @@ Map to presentation views:
 
 Ask clarifying questions using AskUserQuestion:
 
-- What is the system's purpose?
-- Who are the stakeholders?
-- What external systems does it interact with?
-- What constraints exist?
+```json
+{
+  "questions": [
+    {
+      "question": "What is the system's primary purpose?",
+      "header": "Purpose",
+      "options": [
+        {
+          "label": "New feature",
+          "description": "Building something that doesn't exist yet"
+        },
+        {
+          "label": "Document existing",
+          "description": "Understand and document current architecture"
+        },
+        {
+          "label": "Evolve system",
+          "description": "Extend or modify existing architecture"
+        }
+      ],
+      "multiSelect": false
+    },
+    {
+      "question": "Who are the primary stakeholders?",
+      "header": "Stakeholders",
+      "options": [
+        {
+          "label": "End users",
+          "description": "External customers using the product"
+        },
+        {
+          "label": "Internal team",
+          "description": "Developers and operations"
+        },
+        { "label": "External systems", "description": "APIs and integrations" },
+        {
+          "label": "Multiple groups",
+          "description": "Mix of above stakeholders"
+        }
+      ],
+      "multiSelect": true
+    },
+    {
+      "question": "What external systems does it interact with?",
+      "header": "Integrations",
+      "options": [
+        {
+          "label": "Databases",
+          "description": "SQL, NoSQL, or other data stores"
+        },
+        {
+          "label": "Third-party APIs",
+          "description": "External services and providers"
+        },
+        {
+          "label": "Message queues",
+          "description": "Async communication systems"
+        },
+        { "label": "None/minimal", "description": "Mostly self-contained" }
+      ],
+      "multiSelect": true
+    },
+    {
+      "question": "How should the design be validated?",
+      "header": "Testing",
+      "options": [
+        {
+          "label": "Integration tests",
+          "description": "Verify components work together"
+        },
+        {
+          "label": "Architecture review",
+          "description": "Team review before implementation"
+        },
+        {
+          "label": "Proof of concept",
+          "description": "Build a minimal implementation first"
+        }
+      ],
+      "multiSelect": false
+    }
+  ]
+}
+```
+
+**Iterate if needed:**
+
+If Context score < 70%:
+
+1. Identify gap: "I need to understand [specific aspect]"
+2. Ask targeted follow-up about stakeholders or constraints
+3. Proceed when Context >= 70%
+
+**Checkpoint:** Display confidence score. Proceed when Context >= 70%.
 
 ### Phase 2: Component Discovery (~40/100)
 
@@ -111,31 +193,41 @@ Explain the architecture aloud as if teaching someone:
 
 This surfaces gaps in understanding before committing to design decisions.
 
-**Delegate exploration to subagents (MUST follow Model Enforcement table above):**
+**Delegate exploration to subagents (MUST follow Model Enforcement table):**
 
 ```
 # Launch in parallel (single message, multiple Task calls):
 
-# File search - MUST use haiku (DO NOT use sonnet - unnecessary cost)
-Task 1 (Explore, model=haiku):
+# File search - MUST use haiku
+Task (Explore, model=haiku):
 "Search for files related to [area].
 Return: file paths and brief descriptions."
 
-# Component discovery - MUST use sonnet (DO NOT use haiku - needs comprehension)
-Task 2 (Explore, model=sonnet):
+# Component discovery - MUST use sonnet
+Task (Explore, model=sonnet):
 "Identify components in [area]. Return:
 - Component names and responsibilities
 - Dependencies between components
 - File paths for each"
 
-# Flow analysis - MUST use opus (complex multi-step tracing, async boundaries)
-Task 3 (general-purpose, model=opus):
+# Flow analysis - MUST use opus (complex multi-step tracing)
+Task (general-purpose, model=opus):
 "Analyze data flow in [area]. Return:
 - Entry points
 - Data transformations (including async and conditional paths)
 - Output destinations
 - State changes across boundaries"
 ```
+
+**Iterate if needed:**
+
+If Components score < 60%:
+
+1. Identify gap: "I haven't mapped [specific component area]"
+2. Launch additional subagents for unexplored areas
+3. Proceed when Components >= 60%
+
+**Checkpoint:** Display confidence score. Proceed when Components >= 60%.
 
 ### Phase 3: Flow and Boundary Mapping (~65/100)
 
@@ -161,6 +253,17 @@ User ──► Service ──► Database
 
 Identify extension points and interfaces.
 
+**Iterate if needed:**
+
+If Flows score < 50% or Boundaries score < 45%:
+
+1. Identify gap: "The [specific flow] isn't fully mapped"
+2. Launch subagent for specific flow paths
+3. Ask user about edge cases and error flows
+4. Proceed when Flows >= 50% AND Boundaries >= 45%
+
+**Checkpoint:** Display confidence score. Proceed when Flows >= 50% AND Boundaries >= 45%.
+
 ### Phase 4: Risk and Trade-off Analysis (~80/100)
 
 **Define Quality Attribute Scenarios (ATAM technique):**
@@ -174,49 +277,30 @@ For critical quality attributes, specify measurable scenarios:
 | Modifiability | [change request]  | [effort + scope]        |
 | Scalability   | [load increase]   | [degradation threshold] |
 
-Example:
-
-| Attribute     | Scenario                    | Response Measure                   |
-| ------------- | --------------------------- | ---------------------------------- |
-| Performance   | 100 concurrent API requests | 95th percentile < 200ms            |
-| Security      | SQL injection attempt       | Blocked, logged, alerted within 1s |
-| Modifiability | Add new payment provider    | < 1 day, isolated to PaymentModule |
-
-Use these scenarios to validate design decisions and identify risks.
-
-**Validate architectural assumptions:**
-
-For key assumptions, design validation experiments:
-
-```markdown
-### Assumption: [statement]
-
-**Test:** [how to verify]
-**Evidence needed:** [what would confirm/refute]
-```
-
-Delegate validation (MUST use sonnet - requires reasoning):
+**Launch parallel validation and risk analysis (MUST follow Model Enforcement):**
 
 ```
-# Assumption validation - MUST use sonnet (DO NOT use haiku - requires reasoning)
+# Launch in parallel (single message, multiple Task calls):
+
+# Assumption validation - MUST use sonnet
 Task (Explore, model=sonnet):
-"Validate assumption: [X]. Check:
+"Validate architectural assumptions:
+[list key assumptions]
+
+Check:
 1. Does this pattern exist in codebase?
 2. Are dependencies compatible?
 3. Will this integrate with existing [system]?
 
 Return: supporting/refuting evidence."
-```
 
-**Delegate risk analysis (MUST use opus - architectural trade-offs require deep reasoning):**
-
-```
-# Risk analysis - MUST use opus + general-purpose (Sonnet fails on complex trade-off analysis)
+# Risk analysis - MUST use opus (architectural trade-offs)
 Task (general-purpose, model=opus):
 "Analyze architectural risks in [design]:
 - Single points of failure
 - Scalability bottlenecks
 - Security vulnerabilities
+- Integration complexity
 
 Return risks with severity and likelihood."
 ```
@@ -246,6 +330,16 @@ Return risks with severity and likelihood."
 - [Trade-off accepted]
 - [Negative consequence we must live with]
 ```
+
+**Iterate if needed:**
+
+If Risks score < 50% or Trade-offs score < 50%:
+
+1. Launch additional opus subagent for deeper risk assessment
+2. Ask user about risk tolerance for specific scenarios
+3. Proceed when Risks >= 50% AND Trade-offs >= 50%
+
+**Checkpoint:** Display confidence score. Proceed when Risks >= 50% AND Trade-offs >= 50%.
 
 ### Phase 5: Design Presentation (~85/100)
 
@@ -292,14 +386,22 @@ When confidence >= 80%, present:
 ### 7. Extensibility Guide
 
 [How to add new features]
+
+### 8. Unresolved Questions
+
+- [Architectural decision requiring stakeholder input]
+- [Integration point needing clarification]
+- [Assumption about external system behavior]
+
+_If these affect design validity, address them before implementation._
 ```
 
 ### Phase 5.5: Design Validation (~90/100)
 
-Before seeking approval, validate the design against the codebase (MUST use sonnet - requires reasoning):
+Before seeking approval, validate the design against the codebase (MUST use sonnet):
 
 ```
-# Design validation - MUST use sonnet (DO NOT use haiku - requires reasoning)
+# Design validation - MUST use sonnet
 Task (Explore, model=sonnet):
 "Validate this architecture:
 [key components and patterns]
@@ -315,7 +417,32 @@ Return: validation results with concerns."
 
 Address any concerns before presenting for approval.
 
-Ask for approval or if user wants implementation plan.
+Ask for approval:
+
+```json
+{
+  "questions": [
+    {
+      "question": "Ready to proceed with this design?",
+      "header": "Proceed",
+      "options": [
+        {
+          "label": "Yes, approved",
+          "description": "Design is ready for implementation"
+        },
+        {
+          "label": "Create implementation plan",
+          "description": "Generate detailed implementation steps"
+        },
+        { "label": "Revise design", "description": "I have changes to discuss" }
+      ],
+      "multiSelect": false
+    }
+  ]
+}
+```
+
+---
 
 ## Diagram Formats
 
@@ -349,28 +476,25 @@ User     Service     Database
   │◄Response─            │
 ```
 
-## Subagent Usage Summary (REQUIRED - See Model Enforcement section)
-
-| Phase | Task                | Subagent        | Model      | Enforcement                         |
-| ----- | ------------------- | --------------- | ---------- | ----------------------------------- |
-| 2     | File/pattern search | Explore         | **haiku**  | MUST use - fast/cheap               |
-| 2     | Component discovery | Explore         | **sonnet** | MUST use - needs comprehension      |
-| 2     | Flow analysis       | general-purpose | **opus**   | MUST use - complex multi-step tracing |
-| 4     | Risk analysis       | general-purpose | **opus**   | MUST use - architectural trade-offs |
-| 5.5   | Design validation   | Explore         | **sonnet** | MUST use - pattern matching         |
-| 1,5   | User interaction    | (main)          | **opus**   | MUST NOT spawn as subagent          |
+---
 
 ## Factor Scoring Guide
 
-| Factor     | Low                   | Medium                  | High                    |
-| ---------- | --------------------- | ----------------------- | ----------------------- |
-| Context    | Purpose unclear       | Main stakeholders known | Full context documented |
-| Components | None identified       | Key components found    | All with SRP verified   |
-| Flows      | No flow understanding | Happy path documented   | All flows + edge cases  |
-| Boundaries | Not considered        | Interfaces identified   | Extension points marked |
-| Risks      | Not assessed          | Main risks listed       | Risks with mitigations  |
-| Trade-offs | Not considered        | Key trade-offs noted    | ADR-quality rationale   |
-| Alignment  | No confirmations      | Basic confirmed         | Direction confirmed     |
+| Factor     | Low (0-30%)               | Medium (31-70%)                         | High (71-100%)                                   |
+| ---------- | ------------------------- | --------------------------------------- | ------------------------------------------------ |
+| Context    | < 2 questions answered    | 2-3 questions answered                  | All 4 questions answered AND stakeholders mapped |
+| Components | 0-1 components identified | 2-4 key components AND responsibilities | All components with SRP AND dependencies mapped  |
+| Flows      | No sequence diagrams      | Happy path documented                   | Happy path AND error flows AND edge cases        |
+| Boundaries | 0 interfaces identified   | Main interfaces listed                  | All interfaces AND extension points documented   |
+| Risks      | 0 risks identified        | 1-2 main risks AND severity             | 3+ risks with severity AND mitigations defined   |
+| Trade-offs | 0 ADRs documented         | 1 key trade-off noted                   | ADR for each major design decision               |
+| Alignment  | 0 user confirmations      | 1 confirmation (context OR approach)    | 2+ confirmations AND design direction approved   |
+
+**How to calculate score:**
+
+1. Rate each factor using the criteria above (0-100%)
+2. Apply weights: Context(15%) + Components(20%) + Flows(15%) + Boundaries(12%) + Risks(15%) + Trade-offs(13%) + Alignment(10%)
+3. Sum for total confidence score
 
 ## Minimum Thresholds for HIGH
 
@@ -381,6 +505,8 @@ User     Service     Database
 - Risks >= 50%
 - Trade-offs >= 50%
 - Alignment >= 50%
+
+---
 
 ## Anti-Patterns
 
@@ -422,9 +548,11 @@ You: I'll use this architecture as the basis:
 If user wants design early:
 
 ```
-You: Current confidence is [X]/100. I can present now, but note:
-- [error flows not documented]
-- [trade-offs not analyzed]
+Current confidence is [X]/100. I can present now, but note:
+- [Gap 1: error flows not documented]
+- [Gap 2: trade-offs not analyzed]
 
-[Present with "Preliminary" label on incomplete sections]
+**Proceeding with preliminary design...**
+
+[Present with "PRELIMINARY" label on incomplete sections]
 ```

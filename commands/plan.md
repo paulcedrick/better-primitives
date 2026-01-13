@@ -4,18 +4,18 @@ description: Start enhanced planning with thorough questioning and subagent expl
 
 # Enhanced Planning Mode
 
-You are now in enhanced planning mode. Your goal is to achieve **high confidence** (80+) in your understanding before presenting an implementation plan.
+You are now in enhanced planning mode. Your goal is to reach **HIGH confidence (80+)** before presenting an implementation plan.
+
+> **Reference:** See `_base.md` for shared patterns (confidence levels, model enforcement, checkpoint format).
 
 ## Core Principle
 
-**Iterate until confident. Delegate exploration. Validate deeply. Confirm with user.**
+**Iterate until confident. Delegate exploration. Collaborate with user. Validate before acting.**
 
 ## Confidence Score
 
-Calculate confidence using this formula:
-
 ```
-Score = Intent(20%) + Context(15%) + Requirements(15%) + Solution(15%) + Validation(15%) + Risk(10%) + Alignment(10%)
+Score = Intent(25%) + Exploration(25%) + Requirements(15%) + Validation(20%) + Alignment(15%)
 ```
 
 | Level      | Score | Description                    |
@@ -26,163 +26,259 @@ Score = Intent(20%) + Context(15%) + Requirements(15%) + Solution(15%) + Validat
 | HIGH       | 75-89 | Ready to present plan          |
 | READY      | 90+   | Complete confidence            |
 
-**Target:** Reach HIGH (80+) before presenting the plan. Display score after each step.
+**Target:** Reach HIGH (80+) before presenting. Display score after each phase. If below threshold, iterate.
 
 ## Model Enforcement (REQUIRED)
 
-You MUST follow these model restrictions for ALL Task tool invocations:
-
-| Task Type          | Model      | Subagent        | Constraint                                       |
-| ------------------ | ---------- | --------------- | ------------------------------------------------ |
-| File search        | **haiku**  | Explore         | MUST use - fast, cheap                           |
-| Dependency scan    | **haiku**  | Explore         | MUST use - simple pattern matching               |
-| Pre-flight checks  | **haiku**  | Explore         | MUST use - simple health checks                  |
-| Pattern triage     | **haiku**  | Explore         | MUST use - flag areas for deeper analysis        |
-| Code analysis      | **sonnet** | Explore         | MUST use - needs comprehension                   |
-| Approach testing   | **sonnet** | Explore         | MUST use - pattern matching, feasibility         |
-| Web research       | **sonnet** | Explore         | MUST use - WebSearch/WebFetch for docs/patterns  |
-| Targeted analysis  | **sonnet** | Explore         | MUST use - analyze areas flagged by triage       |
-| Complexity scoring | **sonnet** | Explore         | MUST use - quantify implementation effort        |
-| Flow analysis      | **opus**   | general-purpose | ESCALATION ONLY - when sonnet finds complexity   |
-| Risk assessment    | **opus**   | general-purpose | ESCALATION ONLY - when sonnet finds high risks   |
-| Plan review        | **opus**   | general-purpose | QUALITY OVERRIDE - comprehensive review required |
-| Plan execution     | **opus**   | general-purpose | MUST use - autonomous implementation             |
-| User interaction   | **opus**   | (main)          | Main thread only - NOT spawned as subagent       |
+| Task Type        | Model      | Subagent        | Constraint                                |
+| ---------------- | ---------- | --------------- | ----------------------------------------- |
+| File search      | **haiku**  | Explore         | MUST use - fast, cheap                    |
+| Dependency scan  | **haiku**  | Explore         | MUST use - pattern matching               |
+| Test patterns    | **haiku**  | Explore         | MUST use - simple discovery               |
+| Code analysis    | **sonnet** | Explore         | MUST use - needs comprehension            |
+| Feasibility      | **sonnet** | Explore         | MUST use - pattern matching               |
+| Web research     | **sonnet** | Explore         | MUST use - WebSearch/WebFetch             |
+| Complexity score | **sonnet** | Explore         | MUST use - quantify effort                |
+| Flow analysis    | **opus**   | general-purpose | MUST use - async boundaries, state flows  |
+| Risk assessment  | **opus**   | general-purpose | MUST use - breaking changes, edge cases   |
+| Plan review      | **sonnet** | Explore         | MUST use - pattern matching, completeness |
+| Plan execution   | **opus**   | general-purpose | MUST use - autonomous implementation      |
+| User interaction | **opus**   | (main)          | Main thread only                          |
 
 **Model Selection Criteria:**
 
-- **Haiku**: Simple file/pattern searches, dependency scanning, triage - mechanical tasks without reasoning
-- **Sonnet**: Code comprehension, pattern detection, approach feasibility, web research, targeted analysis - tasks requiring reasoning
-- **Opus**: Complex flow tracing, high-risk assessment, plan review, plan execution - reserved for high-value tasks
+- **Haiku**: Simple file/pattern searches, dependency scanning - mechanical tasks without reasoning
+- **Sonnet**: Code comprehension, pattern detection, feasibility - tasks requiring understanding
+- **Opus**: Flow tracing, risk assessment, plan review, execution - quality-critical reasoning
 
 **Negative Constraints:**
 
-- **Haiku** MUST NOT: analyze code patterns, investigate dependencies, reason about architecture, test approaches
-- **Sonnet** MUST NOT: be used for simple file searches (use haiku), execute plans (use opus), perform final review (use opus)
-- **Opus** subagents: Reserved for escalation (complex flows/high risks), plan review, and plan execution only
+- **Haiku** MUST NOT: analyze code logic, trace flows, assess risks, review plans
+- **Sonnet** MUST NOT: be used for simple file searches (use haiku), trace complex flows (use opus), assess architectural risks (use opus)
+- **Opus** subagents: Reserved for deep validation, plan review, and execution - high-value tasks only
 
-**Cost Optimization Rule:**
-
-- Use **haiku triage → sonnet analysis → opus escalation** pattern to minimize opus usage
-- Only escalate to opus when sonnet analysis finds complexity or ambiguity
-
-**Context Optimization Rule (CRITICAL):**
-
-- Main thread MUST NOT use Read, Grep, or Glob tools directly
-- ALL file exploration MUST be delegated to subagents
-- Main thread only receives summaries, preserving context for longer sessions
+**Context Rule:** Main thread MUST NOT use Read/Grep/Glob directly. Delegate ALL exploration to subagents.
 
 ---
 
 ## Planning Process
 
-### Phase 0.5: Pre-Flight Health Check (~5/100)
+### Phase 1: Intent Clarification (~25/100)
 
-**Launch 1 haiku subagent for repository health check:**
+**Goal:** Understand what the user wants and why.
+
+**Step 1a: Ask clarifying questions**
+
+```json
+{
+  "questions": [
+    {
+      "question": "What exactly needs to be built or changed?",
+      "header": "Goal",
+      "options": [
+        {
+          "label": "New feature",
+          "description": "Building functionality that doesn't exist yet"
+        },
+        {
+          "label": "Bug fix",
+          "description": "Fixing existing broken behavior"
+        },
+        {
+          "label": "Refactor",
+          "description": "Improving code without changing behavior"
+        },
+        {
+          "label": "Enhancement",
+          "description": "Improving existing functionality"
+        }
+      ],
+      "multiSelect": false
+    },
+    {
+      "question": "What problem does this solve?",
+      "header": "Problem",
+      "options": [
+        {
+          "label": "User-facing issue",
+          "description": "Affects end users directly"
+        },
+        {
+          "label": "Developer experience",
+          "description": "Makes development easier/faster"
+        },
+        {
+          "label": "Technical debt",
+          "description": "Addresses accumulated code quality issues"
+        },
+        {
+          "label": "Performance",
+          "description": "Improves speed or resource usage"
+        }
+      ],
+      "multiSelect": true
+    },
+    {
+      "question": "What does success look like?",
+      "header": "Success",
+      "options": [
+        {
+          "label": "Working feature",
+          "description": "Feature complete and functional"
+        },
+        {
+          "label": "Tests passing",
+          "description": "All tests green including new ones"
+        },
+        { "label": "Deployed", "description": "Running in production" },
+        { "label": "Reviewed", "description": "PR approved by team" }
+      ],
+      "multiSelect": true
+    },
+    {
+      "question": "How should the implementation be tested?",
+      "header": "Testing",
+      "options": [
+        {
+          "label": "Unit tests",
+          "description": "Test individual functions/components"
+        },
+        {
+          "label": "Integration tests",
+          "description": "Test components working together"
+        },
+        { "label": "E2E tests", "description": "Test full user workflows" },
+        { "label": "Manual testing", "description": "I'll test it manually" }
+      ],
+      "multiSelect": true
+    }
+  ]
+}
+```
+
+**Step 1b: Pre-flight check (optional but recommended)**
 
 ```
-# Pre-flight check - MUST use haiku
 Task (Explore, model=haiku):
-"Perform pre-flight health check:
-1. Git status - any uncommitted changes?
-2. Dependencies - are node_modules/vendor installed?
-3. Build status - any obvious compilation errors?
-4. Test status - do tests pass? (quick check only)
-
-Return: Health report with any blockers or warnings."
+"Quick health check:
+1. Git status - uncommitted changes?
+2. Dependencies installed?
+3. Build/tests passing?
+Return: Health summary with any blockers."
 ```
 
-If blockers found, alert user before proceeding:
+If blockers found, alert user before proceeding.
 
-```
-⚠️ Pre-flight issues detected:
-- [issue 1]
-- [issue 2]
+**Step 1c: Iterate if needed**
 
-Recommend resolving before planning. Continue anyway?
-```
+If Intent score < 70%:
 
-### Phase 1: Intent Clarification (~15/100)
+1. Identify gap: "I need to understand [specific aspect]"
+2. Ask targeted follow-up question
+3. Proceed when Intent >= 70%
 
-Ask clarifying questions using AskUserQuestion:
+**Checkpoint:** Display confidence score. Proceed when Intent >= 70%.
 
-- What exactly needs to be built?
-- What problem does this solve?
-- What does success look like?
-- What constraints exist?
+---
 
-### Phase 2: Codebase Exploration (~45/100)
+### Phase 2: Parallel Exploration (~55/100)
+
+**Goal:** Understand the codebase through parallel subagent exploration.
 
 **Launch 5 subagents in parallel (single message, multiple Task calls):**
 
 ```
-# Task 1: File search + dependency scan - MUST use haiku
-Task 1 (Explore, model=haiku):
-"Search for files related to [feature area].
-Also identify:
-- Import/export dependencies
-- Affected modules
+# Task 1: File discovery - MUST use haiku
+Task (Explore, model=haiku):
+"Find files related to [feature area]:
+- Source files and their dependencies
 - Related test files
+- Config files
+Return: File paths with brief descriptions."
 
-Return: file paths, dependency graph, and affected areas."
+# Task 2: Test patterns - MUST use haiku
+Task (Explore, model=haiku):
+"Discover testing setup:
+- Test frameworks used
+- Test file locations
+- Existing coverage for related areas
+Return: Testing summary."
 
-# Task 2: Test file discovery - MUST use haiku
-Task 2 (Explore, model=haiku):
-"Search for test files and testing patterns:
-1. Test file locations and naming conventions
-2. Test frameworks used (jest, pytest, etc.)
-3. Existing test coverage for related areas
-4. Test utilities and helpers available
-
-Return: test file paths, framework info, and coverage gaps."
-
-# Task 3: Code analysis + pattern detection - MUST use sonnet
-Task 3 (Explore, model=sonnet):
-"Analyze the codebase for:
+# Task 3: Code analysis - MUST use sonnet
+Task (Explore, model=sonnet):
+"Analyze codebase for [feature]:
 1. Existing patterns and conventions
 2. Similar implementations to reference
-3. Integration points for [feature]
+3. Integration points
+Return: Patterns found with code examples."
 
-Return structured summary with:
-- Key files found (with paths)
-- Patterns observed
-- Code examples to follow"
+# Task 4: Feasibility - MUST use sonnet
+Task (Explore, model=sonnet):
+"Evaluate feasibility of [feature]:
+1. Does codebase support this pattern?
+2. What can be reused?
+3. What new code is needed?
+4. Any conflicting patterns?
+Return: Feasibility assessment with evidence."
 
-# Task 4: Approach feasibility testing - MUST use sonnet
-Task 4 (Explore, model=sonnet):
-"Evaluate feasibility of implementing [feature] in this codebase:
-1. Does the codebase support this pattern?
-2. What existing code can be reused?
-3. What new abstractions are needed?
-4. Are there conflicting patterns?
-
-Return feasibility assessment with evidence from codebase."
-
-# Task 5: Web research - MUST use sonnet with WebSearch/WebFetch
-Task 5 (Explore, model=sonnet):
-"Research external resources for [feature]:
-1. Use WebSearch to find best practices and documentation
-2. Use WebFetch to retrieve relevant articles/docs
-3. Look for common patterns and pitfalls
-4. Find reference implementations if available
-
-Search queries to try:
-- '[technology] [feature] best practices'
-- '[technology] [feature] implementation guide'
-- '[feature] common pitfalls'
-
-Return: Summary of best practices, relevant links, and recommendations."
+# Task 5: External research - MUST use sonnet (if needed)
+Task (Explore, model=sonnet):
+"Research best practices for [feature]:
+- Use WebSearch for documentation/guides
+- Use WebFetch for relevant articles
+- Look for common patterns and pitfalls
+Return: Best practices summary with links."
 ```
 
-### Phase 3: Solution Validation (~65/100)
+**After results return:**
 
-Based on exploration results:
+Present findings summary to user:
 
-1. Identify potential approaches
-2. Evaluate against existing patterns
-3. Ask user about trade-offs using AskUserQuestion
+```json
+{
+  "questions": [
+    {
+      "question": "Based on what I found, does this match your expectations?",
+      "header": "Verify",
+      "options": [
+        {
+          "label": "Yes, continue",
+          "description": "Exploration looks complete"
+        },
+        {
+          "label": "Explore more",
+          "description": "I think you missed some areas"
+        },
+        {
+          "label": "Clarify findings",
+          "description": "I have questions about what you found"
+        }
+      ],
+      "multiSelect": false
+    }
+  ]
+}
+```
 
-Example:
+**Iterate if needed:**
+
+If Exploration score < 60% or user wants more:
+
+1. Launch additional targeted subagents
+2. Re-explore specific areas
+3. Loop until user confirms understanding
+
+**Checkpoint:** Display confidence score. Proceed when Exploration >= 60%.
+
+---
+
+### Phase 3: Approach Selection (~70/100)
+
+**Goal:** Select implementation approach and identify risks.
+
+**Step 3a: Present approaches**
+
+Based on exploration, identify potential approaches and present trade-offs:
 
 ```json
 {
@@ -191,8 +287,18 @@ Example:
       "question": "Which approach should we use?",
       "header": "Approach",
       "options": [
-        { "label": "Option A", "description": "[trade-offs]" },
-        { "label": "Option B", "description": "[trade-offs]" }
+        {
+          "label": "Option A (Recommended)",
+          "description": "[approach with pros/cons]"
+        },
+        {
+          "label": "Option B",
+          "description": "[alternative approach with pros/cons]"
+        },
+        {
+          "label": "Need more info",
+          "description": "Can't decide yet, need to explore more"
+        }
       ],
       "multiSelect": false
     }
@@ -200,182 +306,204 @@ Example:
 }
 ```
 
-### Phase 3.5: Deep Validation (~75/100)
+**Step 3b: Targeted validation (conditional)**
 
-Deep validation uses a **three-tier approach** to minimize opus costs while maintaining quality:
-
-#### Phase 3.5a: Triage (Haiku)
-
-**Launch 4 haiku subagents in parallel for pattern detection:**
+If complexity indicators found, launch triage → analysis:
 
 ```
-# Task 1: Async/flow pattern triage - MUST use haiku
-Task 1 (Explore, model=haiku):
-"Search for patterns that indicate complexity:
-1. Async/await patterns in affected files
-2. State management (Redux, Context, stores)
-3. Event emitters or pub/sub patterns
-4. Database transactions or locks
+# Triage - MUST use haiku
+Task (Explore, model=haiku):
+"Search [affected files] for complexity indicators:
+- Async/await patterns
+- State management
+- Security-sensitive code
+- Large files (>500 lines)
+Return: Complexity flags per file."
 
-Return: List of files with complexity indicators (yes/no per category)."
-
-# Task 2: Security pattern triage - MUST use haiku
-Task 2 (Explore, model=haiku):
-"Search for security-sensitive patterns:
-1. Authentication/authorization checks
-2. Input validation or sanitization
-3. SQL queries or ORM usage
-4. External API calls or secrets
-
-Return: List of files with security indicators (yes/no per category)."
-
-# Task 3: Test coverage triage - MUST use haiku
-Task 3 (Explore, model=haiku):
-"Search for test coverage gaps:
-1. Test files for affected modules
-2. Mock/stub patterns used
-3. Integration test presence
-4. E2E test coverage
-
-Return: Coverage summary (tested/untested per module)."
-
-# Task 4: Risk indicator triage - MUST use haiku
-Task 4 (Explore, model=haiku):
-"Search for risk indicators:
-1. TODO/FIXME/HACK comments in affected areas
-2. Deprecated code or APIs
-3. Complex conditionals (nested if/else)
-4. Large files (>500 lines)
-
-Return: Risk indicator counts per file."
-```
-
-#### Phase 3.5b: Targeted Analysis (Sonnet)
-
-**Launch sonnet subagents only for areas flagged by triage:**
-
-```
-# For each area flagged by triage, launch targeted analysis:
-
-# If async patterns found:
+# Analysis (only for flagged areas) - MUST use sonnet
 Task (Explore, model=sonnet):
-"Analyze async flow in [flagged files]:
-1. Identify race condition risks
-2. Map state transitions
-3. Check error handling in async paths
-
-Return: Flow issues with severity (Low/Medium/High)."
-
-# If security patterns found:
-Task (Explore, model=sonnet):
-"Analyze security in [flagged files]:
-1. Review input validation completeness
-2. Check authorization logic
-3. Identify data exposure risks
-
-Return: Security issues with severity and recommendations."
-
-# If test coverage gaps found:
-Task (Explore, model=sonnet):
-"Analyze testing strategy for [flagged modules]:
-1. What test types are needed?
-2. What mocks/fixtures are required?
-3. Estimate test implementation effort
-
-Return: Testing plan with priorities."
+"Deep analysis of [flagged area]:
+- Identify specific risks
+- Check for edge cases
+- Recommend mitigations
+Return: Risk assessment with severity."
 ```
 
-#### Phase 3.5c: Opus Escalation (Conditional)
+**Step 3c: Confirm understanding**
 
-**Only escalate to opus if sonnet analysis found:**
+```json
+{
+  "questions": [
+    {
+      "question": "I've identified these risks. Any concerns?",
+      "header": "Risks",
+      "options": [
+        { "label": "Looks good", "description": "Risks are acceptable" },
+        {
+          "label": "Concerned about specific risk",
+          "description": "I want to discuss specific risks"
+        },
+        {
+          "label": "Add more mitigations",
+          "description": "I want more safety nets"
+        }
+      ],
+      "multiSelect": false
+    }
+  ]
+}
+```
 
-- High-severity flow complexity (async boundaries, race conditions)
-- High-severity security risks
-- Architectural ambiguity requiring expert judgment
+**Iterate if needed:**
+
+If user has concerns:
+
+1. Address specific concerns
+2. Run additional validation
+3. Loop until user is comfortable
+
+**Checkpoint:** Display confidence score. Proceed when Validation >= 50% AND Alignment >= 50%.
+
+---
+
+### Phase 3.5: Deep Validation (~80/100)
+
+**Goal:** Use opus for deep analysis of flow and risk before drafting plan.
+
+**Launch 2 opus subagents in parallel:**
 
 ```
-# CONDITIONAL: Only if sonnet found high-severity issues
-
-# If complex flow issues found:
+# Task 1: Flow analysis - MUST use opus + general-purpose
 Task (general-purpose, model=opus):
-"Deep analysis of complex flow in [specific area]:
-1. Map complete data flow with async boundaries
-2. Identify all race condition scenarios
-3. Design synchronization strategy
-4. Recommend architectural changes if needed
+"Analyze data flow for implementing [feature]:
+1. Entry points where data enters the system
+2. Transformations and state changes along the path
+3. Async boundaries and potential race conditions
+4. Output destinations and side effects
+5. Integration points with existing flows
 
-Return: Comprehensive flow map with solutions."
+Return comprehensive flow map with:
+- Data flow diagram (text-based)
+- Potential bottlenecks identified
+- State mutation points
+- Async coordination requirements"
 
-# If high-severity security risks found:
+# Task 2: Risk assessment - MUST use opus + general-purpose
 Task (general-purpose, model=opus):
-"Deep security analysis for [specific vulnerability]:
-1. Assess exploitability
-2. Map attack surface
-3. Design defense-in-depth strategy
-4. Recommend security controls
+"Assess implementation risks for [feature]:
+1. Breaking changes to existing functionality
+2. Edge cases and failure modes
+3. Security implications (input validation, auth, data exposure)
+4. Performance concerns (N+1 queries, memory, latency)
+5. Migration/rollback complexity
 
-Return: Security assessment with mitigation plan."
+Return risk matrix:
+| Risk | Severity | Likelihood | Mitigation |
+With detailed explanation for each HIGH severity item."
 ```
 
-**Escalation Decision Matrix:**
+**After results return:**
 
-| Sonnet Finding             | Severity | Escalate to Opus? |
-| -------------------------- | -------- | ----------------- |
-| Simple flow                | Low      | No                |
-| Async without race risk    | Medium   | No                |
-| Async with race conditions | High     | **Yes**           |
-| Basic input validation     | Low      | No                |
-| Auth logic gaps            | Medium   | No                |
-| Data exposure risk         | High     | **Yes**           |
-| Architectural ambiguity    | High     | **Yes**           |
+Synthesize findings and present to user:
+
+```json
+{
+  "questions": [
+    {
+      "question": "Deep validation found [X risks/concerns]. Ready to proceed to planning?",
+      "header": "Validate",
+      "options": [
+        {
+          "label": "Yes, proceed",
+          "description": "Risks are acceptable, draft the plan"
+        },
+        {
+          "label": "Address risks first",
+          "description": "I want to discuss specific concerns"
+        },
+        {
+          "label": "Re-scope",
+          "description": "Reduce scope to avoid high risks"
+        }
+      ],
+      "multiSelect": false
+    }
+  ]
+}
+```
+
+**Checkpoint:** Display confidence score. Proceed when overall score >= 75%.
+
+---
 
 ### Phase 4: Plan Review (~85/100)
 
-**Launch opus subagent for comprehensive plan review:**
+**Goal:** Have sonnet review the draft plan before presenting to user.
+
+**Step 4a: Draft the plan internally**
+
+Based on all exploration, validation, and deep analysis, draft the implementation plan (do not present yet).
+
+**Step 4b: Launch plan review**
 
 ```
-# Plan review - QUALITY OVERRIDE: Use opus for comprehensive review
-Task (general-purpose, model=opus):
-"Review this implementation plan for [feature]:
+# Plan review - MUST use sonnet (pattern matching + completeness check)
+Task (Explore, model=sonnet):
+"Review this implementation plan:
 
-[Draft plan summary]
+[Draft plan summary with steps, files, decisions, risks]
 
-Check:
-1. Plan Quality
+Evaluate:
+1. **Plan Quality**
    - Are all steps clear and actionable?
    - Is the scope well-defined?
    - Are dependencies properly ordered?
 
-2. Code Impact
+2. **Code Impact**
    - Are all affected files identified?
    - Are integration points covered?
    - Is test coverage addressed?
 
-3. Risk Coverage
-   - Are edge cases documented?
+3. **Risk Coverage**
+   - Are edge cases from risk assessment addressed?
    - Are rollback strategies defined?
-   - Are security concerns addressed?
+   - Are security concerns mitigated?
 
-4. Completeness
+4. **Completeness**
    - Does plan achieve stated goals?
    - Are success criteria measurable?
    - Is anything missing?
 
-Return: Review score (0-100), issues found, suggestions for improvement."
+Return:
+- Review score (0-100)
+- Issues found (list)
+- Suggestions for improvement"
 ```
 
-If review score < 80%, iterate on the plan before presenting.
+**Step 4c: Iterate if needed**
 
-### Phase 5: Plan Presentation (~90/100)
+If review score < 80%:
 
-When confidence >= 80% AND review passes, present:
+1. Address issues raised
+2. Re-draft affected sections
+3. Re-run review until passes
+
+**Checkpoint:** Display confidence score and review score. Proceed when review >= 80%.
+
+---
+
+### Phase 5: Plan Presentation & Execution (~100/100)
+
+**Goal:** Present reviewed plan, score complexity, and optionally execute.
+
+**Step 5a: Present plan**
+
+When confidence >= 80%, present:
 
 ```markdown
 ## Implementation Plan
 
 ### Confidence: [score]/100 (HIGH)
-
-### Review Score: [review_score]/100
 
 ### Summary
 
@@ -390,38 +518,64 @@ When confidence >= 80% AND review passes, present:
 
 ### Key Decisions
 
-| Decision | Status            | Rationale |
-| -------- | ----------------- | --------- |
-| [choice] | Confirmed/Assumed | [why]     |
+| Decision | Status    | Rationale |
+| -------- | --------- | --------- |
+| [choice] | Confirmed | [why]     |
 
 ### Risks & Mitigations
 
-| Risk   | Severity     | Mitigation       |
-| ------ | ------------ | ---------------- |
-| [risk] | High/Med/Low | [how to address] |
+| Risk   | Severity     | Mitigation |
+| ------ | ------------ | ---------- |
+| [risk] | High/Med/Low | [how]      |
 
-### Edge Cases
+### Testing Strategy
 
-| Scenario | Handling        |
-| -------- | --------------- |
-| [case]   | [how addressed] |
+[How the implementation will be tested]
+
+### Unresolved Questions
+
+- [Requirement needing clarification before implementation]
+- [Technical decision requiring more research]
+- [Assumption that should be validated during implementation]
+
+_If these affect plan execution, address them before proceeding._
 ```
 
-Then ask for approval:
+**Step 5b: Complexity scoring**
+
+```
+# Complexity - MUST use sonnet
+Task (Explore, model=sonnet):
+"Score complexity for each step:
+- Complexity (1-5)
+- Risk (1-5)
+- Dependencies (count)
+- Effort: S/M/L
+
+Identify:
+- Critical path
+- High-risk steps (complexity × risk > 15)
+- MVP scope (minimum viable)
+Return: Complexity matrix."
+```
+
+Present complexity summary to user.
+
+**Step 5c: Get approval**
 
 ```json
 {
   "questions": [
     {
       "question": "Ready to proceed with this plan?",
-      "header": "Proceed?",
+      "header": "Proceed",
       "options": [
         {
-          "label": "Yes, execute plan",
-          "description": "Launch execution subagent to implement"
+          "label": "Yes, execute plan (Recommended)",
+          "description": "Launch execution subagent"
         },
         {
-          "label": "Yes, but I'll implement",
+          "label": "Yes, I'll implement",
           "description": "I want to implement manually"
         },
         { "label": "Revise plan", "description": "I have changes" },
@@ -433,252 +587,134 @@ Then ask for approval:
 }
 ```
 
-### Phase 5.5: Complexity Scoring (~92/100)
+**Step 5d: Iterate if needed**
 
-**Launch sonnet subagent for implementation complexity analysis:**
+If user selects "Revise plan" or "More questions":
 
-```
-# Complexity scoring - MUST use sonnet
-Task (Explore, model=sonnet):
-"Score implementation complexity for each step in the plan:
+1. Address concerns
+2. Re-run relevant phases
+3. Loop until approved
 
-For each step, calculate:
-1. Complexity (1-5): How intricate is the change?
-2. Risk (1-5): What could go wrong?
-3. Dependencies (count): How many other steps depend on this?
-4. Estimated effort: S/M/L
-
-Also identify:
-- Critical path (longest chain of dependencies)
-- Highest-risk steps (complexity * risk > 15)
-- Suggested execution order (dependency-aware)
-- Incremental delivery opportunities (MVP scope)
-
-Return: Complexity matrix with execution recommendations."
-```
-
-Present complexity summary:
-
-```markdown
-### Implementation Complexity
-
-| Step | Complexity | Risk | Dependencies | Effort | Priority |
-| ---- | ---------- | ---- | ------------ | ------ | -------- |
-| 1    | 3          | 2    | 0            | M      | First    |
-| 2    | 4          | 3    | 1            | L      | Second   |
-
-**Critical Path:** Step 1 → Step 2 → Step 4
-**High-Risk Steps:** Step 2 (score: 12)
-**MVP Scope:** Steps 1-3 (core functionality)
-```
-
-### Phase 6: Plan Execution (~100/100)
-
-**If user selected "Yes, execute plan", launch opus subagent for autonomous execution:**
+**Step 5e: Execute (if requested)**
 
 ```
-# Plan execution - MUST use opus + general-purpose
+# Execution - MUST use opus + general-purpose
 Task (general-purpose, model=opus):
-"Execute this implementation plan autonomously:
+"Execute this implementation plan:
 
-## Plan Summary
-[Full plan from Phase 5]
+[Full plan]
+[Complexity analysis]
 
-## Complexity Analysis
-[From Phase 5.5]
+Instructions:
+1. Follow suggested execution order
+2. For each step: read files → make changes → verify
+3. If blocked: document and attempt workaround
+4. After completion: run tests, summarize changes
 
-## Execution Instructions
-1. Follow the suggested execution order
-2. For each step:
-   - Read relevant files (via subagents if needed)
-   - Make the required changes
-   - Verify changes work (run tests if available)
-   - Move to next step
-3. If you encounter blockers:
-   - Document the blocker
-   - Attempt reasonable workarounds
-   - If truly stuck, return with status and ask for guidance
-4. After all steps complete:
-   - Run full test suite
-   - Summarize all changes made
-   - List any follow-up items
-
-## Success Criteria
-[From original plan]
-
-Return: Execution report with:
-- Steps completed (with file paths modified)
-- Tests run and results
-- Any issues encountered and resolutions
-- Follow-up recommendations"
+Return: Execution report with files modified, test results, follow-ups."
 ```
 
-**Execution Status Updates:**
+Present execution report to user.
 
-The execution subagent will return a comprehensive report. Present to user:
+---
 
-```markdown
-## Execution Complete
+## Iterative Loop Summary
 
-### Summary
-
-[Brief description of what was implemented]
-
-### Changes Made
-
-| Step | Files Modified | Status  |
-| ---- | -------------- | ------- |
-| 1    | `path/to/file` | ✅ Done |
-| 2    | `path/to/file` | ✅ Done |
-
-### Test Results
-
-- Unit tests: ✅ Passing (42/42)
-- Integration tests: ✅ Passing (8/8)
-
-### Follow-up Items
-
-- [ ] Update documentation
-- [ ] Add additional edge case tests
-
-### Files Modified
-
-- `src/feature/new.ts` (created)
-- `src/feature/existing.ts` (modified)
-- `tests/feature.test.ts` (created)
 ```
+┌─────────────────────────────────────────────────────────────────┐
+│                      ITERATIVE PLANNING                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  Phase 1: Intent            ──► Score < 70%? → Ask more         │
+│           ↓                                                      │
+│  Phase 2: Exploration       ──► Score < 60%? → Explore more     │
+│           ↓                                                      │
+│  Phase 3: Approach          ──► Score < 50%? → Validate more    │
+│           ↓                                                      │
+│  Phase 3.5: Deep Validation ──► Score < 75%? → Analyze more     │
+│           ↓                      (opus flow + risk)              │
+│  Phase 4: Plan Review       ──► Review < 80%? → Revise draft    │
+│           ↓                      (sonnet quality gate)           │
+│  Phase 5: Present & Execute ──► User wants changes? → Revise    │
+│           ↓                                                      │
+│  Execute (optional)                                              │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+
+After EVERY phase:
+1. Display confidence score with breakdown
+2. Check if threshold met
+3. If not: iterate within phase
+4. If yes: proceed to next phase
+5. Always confirm with user before major transitions
+```
+
+## Collaboration Checkpoints
+
+| After     | Ask User                               | Purpose                |
+| --------- | -------------------------------------- | ---------------------- |
+| Phase 1   | "Does this capture your intent?"       | Confirm understanding  |
+| Phase 2   | "Does exploration match expectations?" | Verify coverage        |
+| Phase 3   | "Which approach? Any risk concerns?"   | Get decisions          |
+| Phase 3.5 | "Deep validation found X. Proceed?"    | Confirm risk tolerance |
+| Phase 5   | "Ready to proceed with reviewed plan?" | Final approval         |
+
+---
 
 ## Factor Scoring Guide
 
-| Factor       | Low (0-25%)      | Medium (50%)         | High (75-100%)            |
-| ------------ | ---------------- | -------------------- | ------------------------- |
-| Intent       | Vague request    | Core goal understood | Explicit, confirmed goals |
-| Context      | No exploration   | Key files identified | All areas mapped          |
-| Requirements | Scope unknown    | Scope clear          | Edge cases documented     |
-| Solution     | No approach      | Approach identified  | Validated with evidence   |
-| Validation   | Not validated    | Basic checks done    | Deep flow/risk analysis   |
-| Risk         | Not considered   | Main risks noted     | Mitigations planned       |
-| Alignment    | No confirmations | Basic confirmed      | Key decisions confirmed   |
+| Factor       | Low (0-30%)                   | Medium (31-70%)                     | High (71-100%)                                     |
+| ------------ | ----------------------------- | ----------------------------------- | -------------------------------------------------- |
+| Intent       | < 2 questions answered        | 2-3 questions answered              | All 4 questions answered AND user confirmed intent |
+| Exploration  | < 3 files examined            | 3-7 files AND test patterns found   | 8+ files AND dependencies AND patterns mapped      |
+| Requirements | No edge cases identified      | 1-2 edge cases noted                | Edge cases AND constraints AND success criteria    |
+| Validation   | No approach options presented | 1 approach suggested                | 2+ options with trade-offs AND user chose          |
+| Alignment    | 0 user confirmations          | 1 confirmation (intent OR approach) | 3+ confirmations across phases                     |
 
-## Subagent Usage Summary (REQUIRED)
+**How to calculate score:**
 
-| Phase | Task               | Subagent        | Model      | Parallel? | Enforcement                      |
-| ----- | ------------------ | --------------- | ---------- | --------- | -------------------------------- |
-| 0.5   | Pre-flight check   | Explore         | **haiku**  | No        | MUST use - health check          |
-| 2     | File search        | Explore         | **haiku**  | Yes (5)   | MUST use - fast/cheap            |
-| 2     | Test discovery     | Explore         | **haiku**  | Yes (5)   | MUST use - pattern matching      |
-| 2     | Code analysis      | Explore         | **sonnet** | Yes (5)   | MUST use - needs comprehension   |
-| 2     | Approach testing   | Explore         | **sonnet** | Yes (5)   | MUST use - feasibility           |
-| 2     | Web research       | Explore         | **sonnet** | Yes (5)   | MUST use - WebSearch/WebFetch    |
-| 3.5a  | Pattern triage     | Explore         | **haiku**  | Yes (4)   | MUST use - flag areas            |
-| 3.5b  | Targeted analysis  | Explore         | **sonnet** | Yes (2-4) | MUST use - analyze flagged areas |
-| 3.5c  | Flow escalation    | general-purpose | **opus**   | Yes (0-2) | CONDITIONAL - high severity only |
-| 3.5c  | Risk escalation    | general-purpose | **opus**   | Yes (0-2) | CONDITIONAL - high severity only |
-| 4     | Plan review        | general-purpose | **opus**   | No        | QUALITY OVERRIDE                 |
-| 5.5   | Complexity scoring | Explore         | **sonnet** | No        | MUST use - quantify effort       |
-| 6     | Plan execution     | general-purpose | **opus**   | No        | MUST use - autonomous execution  |
-| 1,3,5 | User interaction   | (main)          | **opus**   | No        | Main thread only                 |
+1. Rate each factor using the criteria above (0-100%)
+2. Apply weights: Intent(25%) + Exploration(25%) + Requirements(15%) + Validation(20%) + Alignment(15%)
+3. Sum for total confidence score
 
-## Parallel Execution Strategy
+## Minimum Thresholds for HIGH (80+)
 
-```
-Phase 0.5 (Pre-Flight) - 1 subagent:
-└── haiku: Repository health check
+| Factor       | Minimum | What it measures                |
+| ------------ | ------- | ------------------------------- |
+| Intent       | 70%     | Goal clarity, user confirmation |
+| Exploration  | 60%     | Codebase understanding          |
+| Requirements | 50%     | Scope clarity, edge cases       |
+| Validation   | 50%     | Approach feasibility            |
+| Alignment    | 50%     | User decisions confirmed        |
 
-Phase 2 (Exploration) - 5 parallel subagents:
-├── haiku:  File search + dependency mapping
-├── haiku:  Test file discovery
-├── sonnet: Code analysis + pattern detection
-├── sonnet: Approach feasibility testing
-└── sonnet: Web research (WebSearch/WebFetch)
-
-Phase 3.5a (Triage) - 4 parallel haiku subagents:
-├── haiku: Async/flow pattern search
-├── haiku: Security pattern search
-├── haiku: Test coverage search
-└── haiku: Risk indicator search
-
-Phase 3.5b (Analysis) - 2-4 parallel sonnet subagents (conditional):
-├── sonnet: Async flow analysis (if flagged)
-├── sonnet: Security analysis (if flagged)
-├── sonnet: Testing strategy (if flagged)
-└── sonnet: Risk analysis (if flagged)
-
-Phase 3.5c (Escalation) - 0-2 opus subagents (conditional):
-├── opus: Complex flow analysis (if high-severity)
-└── opus: Deep security analysis (if high-severity)
-
-Phase 4 (Review) - 1 sequential subagent:
-└── opus: Comprehensive plan review
-
-Phase 5 (Presentation) - Main thread:
-└── opus: Synthesize and present plan
-
-Phase 5.5 (Complexity) - 1 sequential subagent:
-└── sonnet: Implementation complexity scoring
-
-Phase 6 (Execution) - 1 sequential subagent:
-└── opus: Autonomous plan execution
-```
-
-## Cost Comparison
-
-| Scenario          | Haiku | Sonnet | Opus | Est. Cost Reduction |
-| ----------------- | ----- | ------ | ---- | ------------------- |
-| **Old (v2.0)**    | 3     | 2      | 4    | Baseline            |
-| **New (Simple)**  | 9     | 8      | 3    | ~35% reduction      |
-| **New (Complex)** | 9     | 10     | 5    | ~15% reduction      |
-
-_Cost reduction assumes opus is ~15x more expensive than haiku and ~5x more than sonnet._
-
-## Minimum Thresholds for HIGH
-
-- Intent >= 70%
-- Context >= 60%
-- Requirements >= 50%
-- Solution >= 60%
-- Validation >= 50%
-- Alignment >= 50%
+---
 
 ## Anti-Patterns
 
 **Don't:**
 
 - Present plan before 80% confidence
-- Skip exploration (delegate it instead)
-- Make assumptions without asking
-- Ask more than 4 questions per round
+- Skip user confirmation at checkpoints
 - Use opus for simple searches (use haiku)
-- Use opus directly without haiku triage first
-- Skip the triage phase in 3.5a
 - Read files directly in main thread (use subagents)
-- Skip the review phase
-- Execute without complexity scoring
 
 **Do:**
 
-- Show confidence score at every step
-- Delegate ALL file operations to subagents
-- Use haiku triage → sonnet analysis → opus escalation pattern
-- Launch parallel subagents when possible
-- Run web research in Phase 2 for external context
-- Only escalate to opus for high-severity findings
-- Run deep validation before drafting plan
-- Always run plan review before presenting
-- Score complexity before execution
-- Offer autonomous execution option
-- Confirm key decisions with user
-- Keep iterating until HIGH
+- Show confidence score at every phase
+- Iterate until thresholds met
+- Ask user before major decisions
+- Delegate all exploration to subagents
 
 ## Escape Hatch
 
-If user wants the plan early:
+If user wants plan early:
 
 ```
-You: Current confidence is [X]/100. I can present now, but note:
-- [gap 1: e.g., "Flow analysis not completed"]
-- [gap 2: e.g., "Risk assessment pending"]
-- [gap 3: e.g., "Plan review not performed"]
+Current confidence is [X]/100. I can present now, but note:
+- [Gap 1: what's missing]
+- [Gap 2: risks]
 
-[Present plan with "Assumed" or "Unvalidated" status on relevant sections]
+**Proceeding with preliminary plan...**
+
+[Present plan with 'PRELIMINARY' labels on unvalidated sections]
 ```
